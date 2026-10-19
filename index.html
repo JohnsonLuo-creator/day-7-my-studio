@@ -1,0 +1,971 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>CourtMate｜社群貼文工作台</title>
+  <style>
+    :root {
+      /* 課堂暫用介面色，並非已定案的品牌色 */
+      --main: #245a65;
+      --main-dark: #143942;
+      --court: #d5e8e4;
+      --ball: #e3b952;
+      --bg: #f4f8f7;
+      --surface: #ffffff;
+      --ink: #193139;
+      --muted: #687b80;
+      --line: #dbe5e4;
+      --focus: #a56a0a;
+      --shadow: 0 16px 42px rgba(23, 67, 73, .08);
+    }
+    * { box-sizing: border-box; }
+    html { font-family: "PingFang TC", "Noto Sans TC", "Microsoft JhengHei", sans-serif; color: var(--ink); background: var(--bg); }
+    body { margin: 0; min-width: 320px; }
+    button, input, select, textarea { font: inherit; }
+    button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
+    .topbar { background: var(--main-dark); color: white; border-bottom: 5px solid var(--ball); }
+    .top-inner { max-width: 1560px; margin: auto; padding: 21px 32px 22px; display: flex; align-items: end; justify-content: space-between; gap: 24px; }
+    .eyebrow { margin: 0 0 6px; color: #a9d1ca; font-size: 12px; font-weight: 700; letter-spacing: .12em; }
+    h1 { margin: 0; font-family: "Avenir Next", "PingFang TC", sans-serif; font-size: clamp(25px, 2.2vw, 34px); letter-spacing: -.035em; line-height: 1.14; }
+    h1 span { font-size: .64em; font-weight: 600; letter-spacing: 0; margin-left: 9px; color: #e4f0ed; }
+    .status { font-size: 13px; color: #d6e8e4; white-space: nowrap; }
+    .status strong { color: var(--ball); }
+    .intro { max-width: 1560px; margin: 0 auto; padding: 21px 32px 18px; display: flex; justify-content: space-between; align-items: center; gap: 20px; }
+    .intro p { margin: 0; color: var(--muted); font-size: 14px; }
+    .step { color: var(--main); font-family: "Avenir Next", sans-serif; letter-spacing: .07em; font-size: 12px; font-weight: 800; white-space: nowrap; }
+    .workspace { max-width: 1560px; margin: 0 auto; padding: 0 32px 40px; display: grid; grid-template-columns: minmax(290px, 1.02fr) minmax(300px, 1.13fr) minmax(290px, .94fr); gap: 18px; align-items: start; }
+    .panel { background: var(--surface); border: 1px solid var(--line); border-radius: 16px; box-shadow: var(--shadow); min-width: 0; overflow: hidden; }
+    .panel-head { padding: 20px 22px 16px; border-bottom: 1px solid var(--line); }
+    .panel-kicker { display: inline-flex; align-items: center; gap: 8px; margin: 0 0 7px; color: var(--main); font-size: 12px; font-weight: 800; letter-spacing: .06em; }
+    .panel-kicker::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: var(--ball); }
+    h2 { margin: 0; font-size: 21px; line-height: 1.3; letter-spacing: -.03em; }
+    .panel-desc { margin: 7px 0 0; color: var(--muted); font-size: 13px; line-height: 1.55; }
+    .fields { padding: 20px 22px 24px; display: grid; gap: 15px; min-width: 0; grid-template-columns: minmax(0, 1fr); }
+    .field { display: block; min-width: 0; }
+    .field-label { display: block; margin-bottom: 7px; font-size: 13px; font-weight: 700; overflow-wrap: anywhere; }
+    .field-number { color: var(--main); font-family: "Avenir Next", sans-serif; font-size: 11px; margin-right: 7px; }
+    .field-hint { color: var(--muted); font-size: 11px; font-weight: 400; margin-left: 5px; }
+    input, select, textarea { display: block; width: 100%; border: 1px solid #cbdad9; border-radius: 9px; background: #fbfdfc; padding: 11px 12px; color: var(--ink); font-size: 13px; }
+    textarea { min-height: 72px; resize: vertical; line-height: 1.55; }
+    input::placeholder, textarea::placeholder { color: #819196; }
+    .topic-row { display: grid; gap: 10px; min-width: 0; grid-template-columns: minmax(0, 1fr); }
+    .topic-type-label { display: block; margin-bottom: 6px; font-size: 12px; font-weight: 700; color: var(--main-dark); }
+    .divider-label { margin: 4px 0 -4px; padding-top: 16px; border-top: 1px dashed var(--line); color: var(--muted); font-size: 12px; }
+    .editor-content { padding: 18px 22px 24px; }
+    .tabs { display: flex; gap: 7px; flex-wrap: wrap; margin-bottom: 18px; }
+    .tab { appearance: none; border: 1px solid var(--line); background: #f6f9f8; color: var(--muted); border-radius: 8px; padding: 10px 15px; min-width: 57px; font-size: 13px; font-weight: 700; cursor: pointer; }
+    .tab.active { border-color: var(--main); background: var(--main); color: #fff; }
+    .editor-label { display: block; font-size: 13px; font-weight: 700; margin-bottom: 8px; }
+    .post-editor { width: 100%; min-height: 368px; line-height: 1.8; background: #fff; font-size: 15px; }
+    .helper { margin: 10px 0 0; color: var(--muted); font-size: 12px; line-height: 1.55; }
+    .count-row { display: flex; align-items: center; gap: 10px; margin-top: 9px; font-size: 12px; color: var(--muted); }
+    .count-row input { width: 88px; padding: 7px; }
+    .count-over { color: #b3322b; font-weight: 800; }
+    .ask-box { margin-top: 12px; padding: 12px; border-radius: 8px; background: #f0f6f4; white-space: pre-wrap; font-size: 13px; }
+    .board { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
+    .board-column { min-height: 130px; padding: 10px; border-radius: 10px; background: #f3f8f6; }
+    .board-column h3 { margin: 0 0 10px; font-size: 14px; }
+    .board-column .post-item { display: grid; gap: 8px; background: white; margin-bottom: 8px; }
+    .board-column .post-item-actions { flex-wrap: wrap; }
+    .board-column select { padding: 6px; font-size: 12px; }
+    @media (max-width: 690px) { .board { grid-template-columns: 1fr; } }
+    .future-actions { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 22px; padding-top: 18px; border-top: 1px solid var(--line); }
+    .future-actions span { border: 1px dashed #bfd1cf; border-radius: 8px; padding: 9px 11px; color: var(--muted); background: #f8fbfa; font-size: 12px; }
+    .preview-area { padding: 20px 16px 26px; display: flex; flex-direction: column; align-items: center; background: linear-gradient(180deg, #f2f8f6 0%, white 100%); }
+    .phone { width: min(100%, 322px); border: 8px solid #243a3f; border-radius: 37px; background: white; box-shadow: 0 23px 35px rgba(25, 49, 57, .17); overflow: hidden; }
+    .phone-top { height: 27px; display: flex; justify-content: center; align-items: flex-start; }
+    .notch { width: 76px; height: 17px; border-radius: 0 0 12px 12px; background: #243a3f; }
+    .social-head { display: flex; align-items: center; gap: 9px; padding: 11px 13px; border-bottom: 1px solid #edf1ef; }
+    .avatar { display: grid; place-items: center; width: 30px; height: 30px; border-radius: 50%; background: var(--main); color: white; font-size: 13px; font-weight: 800; }
+    .social-name { font-size: 12px; font-weight: 800; }
+    .social-name small { display: block; color: #88989a; font-size: 10px; font-weight: 400; margin-top: 2px; }
+    .mock-image { min-height: 259px; padding: 20px; display: flex; flex-direction: column; justify-content: space-between; background: #bfded8; position: relative; overflow: hidden; }
+    .court-line { position: absolute; inset: 28px 16px; border: 2px solid rgba(255,255,255,.85); }
+    .court-line::before { content: ""; position: absolute; left: 50%; top: 0; bottom: 0; border-left: 2px solid rgba(255,255,255,.85); }
+    .mock-chip, .mock-copy { position: relative; z-index: 1; }
+    .mock-chip { align-self: flex-start; background: #ffffffdc; border-radius: 50px; padding: 6px 9px; color: var(--main-dark); font-size: 10px; font-weight: 700; }
+    .mock-copy { max-width: 205px; color: var(--main-dark); font-size: 24px; line-height: 1.32; font-weight: 900; letter-spacing: -.04em; text-shadow: 0 1px 0 #e8f3f0; }
+    .social-icons { padding: 12px 14px 5px; font-size: 19px; letter-spacing: 6px; }
+    .social-caption { min-height: 100px; padding: 0 14px 14px; color: #697d80; font-size: 12px; line-height: 1.55; }
+    .social-caption strong { color: var(--ink); }
+    .preview-text { white-space: pre-wrap; overflow-wrap: anywhere; }
+    .empty-copy { color: #849397; }
+    .fb-body { padding: 15px 14px; min-height: 96px; font-size: 13px; line-height: 1.6; }
+    .fb-image { min-height: 150px; padding: 20px; display: flex; align-items: end; background: #c7ded8; color: var(--main-dark); font-size: 22px; font-weight: 800; overflow-wrap: anywhere; }
+    .fb-actions { display: flex; justify-content: space-around; padding: 12px 5px 14px; color: #637477; font-size: 12px; border-top: 1px solid #edf1ef; }
+    .line-screen { background: #d9e7ef; min-height: 446px; padding: 20px 12px; }
+    .line-date { text-align: center; color: #647d8c; font-size: 10px; margin-bottom: 28px; }
+    .line-row { display: flex; align-items: start; gap: 9px; }
+    .line-bubble { max-width: 230px; background: white; border-radius: 3px 13px 13px 13px; padding: 12px; font-size: 13px; line-height: 1.65; box-shadow: 0 2px 4px rgba(20,57,66,.06); }
+    .line-time { align-self: end; color: #647d8c; font-size: 9px; white-space: nowrap; }
+    .threads-post { display: flex; gap: 10px; padding: 13px; min-height: 430px; }
+    .threads-content { flex: 1; min-width: 0; font-size: 13px; line-height: 1.7; }
+    .threads-user { font-size: 12px; font-weight: 800; margin-bottom: 8px; }
+    .threads-actions { margin-top: 16px; color: #5c6d71; font-size: 18px; letter-spacing: 11px; }
+    .preview-note { margin: 18px 7px 0; color: var(--muted); font-size: 12px; line-height: 1.55; text-align: center; }
+    .top-actions { display: flex; align-items: center; gap: 9px; flex-wrap: wrap; }
+    .settings-trigger { border: 1px solid #86aaa9; border-radius: 8px; background: transparent; color: white; padding: 9px 13px; font-size: 13px; font-weight: 700; cursor: pointer; white-space: nowrap; }
+    .settings-trigger:hover { background: #ffffff18; }
+    .action-row { margin-top: 8px; padding-top: 16px; border-top: 1px solid var(--line); }
+    .primary-action { border: 0; border-radius: 9px; background: var(--main); color: white; padding: 12px 16px; font-weight: 800; cursor: pointer; }
+    .primary-action:hover { background: var(--main-dark); }
+    .secondary-action { border: 1px solid var(--line); border-radius: 9px; background: white; color: var(--ink); padding: 10px 13px; font-weight: 700; cursor: pointer; }
+    .form-message { margin: 9px 0 0; min-height: 18px; color: #8b4c00; font-size: 12px; line-height: 1.5; }
+    dialog { width: min(92vw, 760px); max-height: 88vh; border: 1px solid var(--line); border-radius: 16px; padding: 0; box-shadow: 0 25px 80px rgba(18,44,51,.25); color: var(--ink); }
+    dialog::backdrop { background: rgba(16,42,49,.55); }
+    .dialog-head { display: flex; align-items: start; justify-content: space-between; gap: 15px; padding: 22px 24px 17px; border-bottom: 1px solid var(--line); }
+    .dialog-head h2 { font-size: 22px; }
+    .dialog-head p { margin: 6px 0 0; color: var(--muted); font-size: 13px; line-height: 1.55; }
+    .icon-close { border: 0; background: transparent; color: var(--muted); font-size: 24px; line-height: 1; cursor: pointer; }
+    .dialog-body { padding: 20px 24px 24px; overflow: auto; }
+    .dialog-body label { display: block; margin: 0 0 7px; font-size: 13px; font-weight: 800; }
+    .dialog-body textarea { min-height: 155px; margin-bottom: 18px; background: #fff; }
+    .dialog-body textarea.prompt-output { min-height: 300px; font-size: 13px; line-height: 1.6; }
+    .dialog-actions { display: flex; align-items: center; flex-wrap: wrap; gap: 10px; }
+    .dialog-status { margin: 10px 0 0; color: var(--main); font-size: 12px; min-height: 18px; }
+    .post-list { display: grid; gap: 10px; }
+    .post-item { display: flex; align-items: center; justify-content: space-between; gap: 14px; border: 1px solid var(--line); border-radius: 10px; padding: 13px; }
+    .post-item strong { display: block; font-size: 14px; overflow-wrap: anywhere; }
+    .post-item small { display: block; color: var(--muted); margin-top: 4px; }
+    .post-item-actions { display: flex; gap: 7px; flex-shrink: 0; }
+    .post-item-actions button { padding: 7px 10px; font-size: 12px; }
+    .danger-action { color: #a4342b; }
+    .empty-list { color: var(--muted); font-size: 14px; margin: 6px 0; }
+    .media-picker { margin-top: 11px; padding: 12px; border: 1px dashed #a8c4bf; border-radius: 10px; background: #f7fbfa; min-width: 0; }
+    .media-picker label { display: block; margin-bottom: 7px; font-size: 12px; font-weight: 700; }
+    .media-picker input[type="file"] { background: white; padding: 9px; font-size: 12px; max-width: 100%; min-width: 0; }
+    .media-picker select { margin-bottom: 10px; }
+    .media-help { color: var(--muted); font-size: 11px; line-height: 1.5; margin: 8px 0 0; overflow-wrap: anywhere; }
+    .media-strip { display: grid; gap: 8px; margin-top: 10px; }
+    .media-item { display: flex; align-items: center; gap: 9px; padding: 7px; border: 1px solid var(--line); border-radius: 8px; background: white; min-width: 0; flex-wrap: wrap; }
+    .media-item[draggable="true"] { cursor: grab; }
+    .media-thumb { width: 56px; height: 56px; border-radius: 6px; object-fit: cover; background: #dbeae6; flex-shrink: 0; }
+    .media-thumb-empty { display: grid; place-items: center; color: var(--main); font-size: 20px; }
+    .media-info { flex: 1; min-width: 0; }
+    .media-info strong { display: block; font-size: 12px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .media-info small { color: var(--muted); font-size: 10px; }
+    .media-controls { display: flex; gap: 3px; flex-wrap: wrap; margin-left: auto; }
+    .media-controls button, .slide-control { border: 1px solid var(--line); border-radius: 6px; background: white; color: var(--main-dark); cursor: pointer; padding: 5px 7px; font-size: 12px; }
+    .media-controls button:disabled { opacity: .35; cursor: default; }
+    .media-frame { position: relative; width: 100%; background: #dbeae6; }
+    .media-frame img, .media-frame video { display: block; width: 100%; max-height: 330px; aspect-ratio: 1 / 1; object-fit: cover; }
+    .fb-media img, .fb-media video { aspect-ratio: 1.6 / 1; }
+    .line-bubble .media-frame, .threads-content .media-frame { margin-top: 9px; border-radius: 7px; overflow: hidden; }
+    .line-bubble .media-frame img, .line-bubble .media-frame video, .threads-content .media-frame img, .threads-content .media-frame video { aspect-ratio: 1.2 / 1; }
+    .slide-tools { position: absolute; left: 7px; right: 7px; bottom: 8px; display: flex; align-items: center; justify-content: space-between; gap: 5px; pointer-events: none; }
+    .slide-tools > * { pointer-events: auto; }
+    .slide-count { border-radius: 50px; background: #193139dc; color: white; padding: 4px 8px; font-size: 10px; }
+    @media (max-width: 1100px) { .workspace { grid-template-columns: minmax(280px, 1fr) minmax(280px, 1fr); } .panel.preview { grid-column: 1 / -1; } .phone { width: 300px; } }
+    @media (max-width: 690px) { .top-inner, .intro { padding-left: 18px; padding-right: 18px; } .top-inner { align-items: start; flex-direction: column; gap: 10px; } h1 span { display: block; margin: 5px 0 0; } .intro { align-items: start; flex-direction: column; gap: 7px; } .workspace { padding: 0 12px 24px; grid-template-columns: 1fr; gap: 13px; } .panel.preview { grid-column: auto; } .panel-head { padding: 17px 17px 14px; } .fields, .editor-content { padding: 17px; } .post-editor { min-height: 250px; } }
+  </style>
+</head>
+<body>
+  <header class="topbar">
+    <div class="top-inner">
+      <div>
+        <p class="eyebrow">COURTMATE · SOCIAL STUDIO</p>
+        <h1>CourtMate <span>社群貼文工作台</span></h1>
+      </div>
+      <div class="top-actions"><div class="status"><strong>第 6 節</strong> · 存檔與試用　｜　品牌配色暫用</div><button class="settings-trigger" id="new-post" type="button">＋ 新的一篇</button><button class="settings-trigger" id="open-posts" type="button">📁 我的貼文</button><button class="settings-trigger" id="open-settings" type="button">⚙ 設定</button></div>
+    </div>
+  </header>
+  <div class="intro">
+    <p>先把想法放進素材卡，再分平台編輯；文字與手機預覽會同步更新。</p>
+    <span class="step">素材卡 → 貼文編輯 → 手機預覽</span>
+  </div>
+  <main class="workspace">
+    <section class="panel" aria-labelledby="materials-title">
+      <div class="panel-head">
+        <p class="panel-kicker">左側 · 素材</p>
+        <h2 id="materials-title">這篇想說什麼？</h2>
+        <p class="panel-desc">先寫一個真實的球友情境；不確定的資訊留在卡片裡。</p>
+      </div>
+      <form class="fields" id="material-fields"></form>
+    </section>
+    <section class="panel" aria-labelledby="editor-title">
+      <div class="panel-head">
+        <p class="panel-kicker">中間 · 編輯</p>
+        <h2 id="editor-title">整理成貼文</h2>
+        <p class="panel-desc">每個平台各寫一篇；切換後，剛才的文字會保留在這個頁面。</p>
+      </div>
+      <div class="editor-content">
+        <div class="tabs" id="platform-tabs" role="tablist" aria-label="貼文平台"></div>
+        <label class="editor-label" for="post-editor">IG 貼文內容</label>
+        <textarea class="post-editor" id="post-editor" placeholder="先在這裡寫下貼文草稿。例：週末有空想打球，卻一直約不到合得來的球友……"></textarea>
+        <div class="count-row"><span id="character-count" role="status">0 字</span><label for="character-limit">此平台字數上限（可選）</label><input id="character-limit" type="number" min="1" step="1" placeholder="未設定"></div>
+        <p class="helper">在這裡編輯文字，右側手機會立即更新。切換平台不會清掉其他平台的草稿。</p>
+        <p class="helper">編輯內容會自動暫存於這個瀏覽器。按「存檔」可放進「我的貼文」。</p>
+      </div>
+    </section>
+    <section class="panel preview" aria-labelledby="preview-title">
+      <div class="panel-head">
+        <p class="panel-kicker">右側 · 預覽</p>
+        <h2 id="preview-title">手機上會長怎樣？</h2>
+        <p class="panel-desc">切換平台查看各自的呈現；畫面仍是課堂示意，不是正式社群截圖。</p>
+      </div>
+      <div class="preview-area">
+        <div class="phone" id="phone-preview" aria-live="polite" aria-label="手機貼文預覽"></div>
+        <p class="preview-note">預覽中的名稱、畫面與文字皆為課堂示意；不是已發布貼文。</p>
+      </div>
+    </section>
+  </main>
+  <dialog id="settings-dialog" aria-labelledby="settings-title">
+    <div class="dialog-head"><div><h2 id="settings-title">品牌與檢查設定</h2><p>貼上一次，存在這個瀏覽器。品牌規格更新時記得重新貼上。</p></div><button class="icon-close" type="button" data-close="settings-dialog" aria-label="關閉設定">×</button></div>
+    <div class="dialog-body">
+      <label for="brand-spec">品牌規格</label>
+      <textarea id="brand-spec" placeholder="貼上「品牌規格.md」的全文"></textarea>
+      <label for="checklist">檢查清單（可選）</label>
+      <textarea id="checklist" placeholder="貼上「通用檢查清單.md」的全文"></textarea>
+      <div class="dialog-actions"><button class="primary-action" id="save-settings" type="button">儲存設定</button><button class="secondary-action" type="button" data-close="settings-dialog">取消</button></div>
+      <p class="dialog-status" id="settings-status" role="status"></p>
+    </div>
+  </dialog>
+  <dialog id="import-dialog" aria-labelledby="import-title">
+    <div class="dialog-head"><div><h2 id="import-title">貼回 AI 寫好的</h2><p>貼上含【FB】【IG】【LINE】【Threads】標題的完整回覆。只有辨識到的平台會更新。</p></div><button class="icon-close" type="button" data-close="import-dialog" aria-label="關閉貼回視窗">×</button></div>
+    <div class="dialog-body"><label for="import-text">AI 的完整回覆</label><textarea id="import-text" placeholder="【FB】&#10;貼文內容…&#10;【IG】&#10;貼文內容…"></textarea><div class="dialog-actions"><button class="primary-action" id="apply-import" type="button">分到各平台</button><button class="secondary-action" type="button" data-close="import-dialog">關閉</button></div><p class="form-message" id="import-status" role="status"></p><div class="ask-box" id="import-questions" hidden></div></div>
+  </dialog>
+  <dialog id="prompt-dialog" aria-labelledby="prompt-title">
+    <div class="dialog-head"><div><h2 id="prompt-title">組好的指令</h2><p>複製後貼給 AI，取得文案再貼回各平台編輯框。這個頁面不會直接呼叫 AI。</p></div><button class="icon-close" type="button" data-close="prompt-dialog" aria-label="關閉指令">×</button></div>
+    <div class="dialog-body">
+      <label for="prompt-output">請先檢查內容，再複製</label>
+      <textarea class="prompt-output" id="prompt-output" readonly></textarea>
+      <div class="dialog-actions"><button class="primary-action" id="copy-prompt" type="button">複製指令</button><button class="secondary-action" type="button" data-close="prompt-dialog">關閉</button></div>
+      <p class="dialog-status" id="copy-status" role="status"></p>
+    </div>
+  </dialog>
+  <dialog id="posts-dialog" aria-labelledby="posts-title">
+    <div class="dialog-head"><div><h2 id="posts-title">我的貼文</h2><p>保存在這個瀏覽器裡的貼文。可重新打開編輯。</p></div><button class="icon-close" type="button" data-close="posts-dialog" aria-label="關閉我的貼文">×</button></div>
+    <div class="dialog-body"><div class="board" id="post-list"></div><p class="dialog-status" id="posts-status" role="status"></p></div>
+  </dialog>
+  <script>
+    // 課堂設定集中在這裡；正式名稱、帳號與主色尚未定案。
+    const BRAND = { name: 'CourtMate', account: '帳號名稱待確認' };
+    const PLATFORMS = ['FB', 'IG', 'LINE', 'Threads'];
+    const POST_TYPES = ['需求提問', '實用內容', '品牌共鳴', '產品概念', '行銷活動'];
+    const FIELDS = [
+      { id: 'topic', label: '這篇要說什麼', type: 'topic', placeholder: '例如：約球最常卡在哪？' },
+      { id: 'scenario', label: '讀者與情境', type: 'textarea', placeholder: '例如：週末有空，卻還沒約到球友' },
+      { id: 'confirmed', label: '已確認的重點', type: 'textarea', placeholder: '只寫已確認、能公開的資訊；沒有就填「無新增事實」' },
+      { id: 'visual', label: '開頭與畫面素材', type: 'textarea', placeholder: '第一句、首圖構想或已有素材' },
+      { id: 'date', label: '日期', type: 'date', hint: '無活動可留空' },
+      { id: 'action', label: '希望讀者做什麼', type: 'input', placeholder: '例如：留言選 A／B／C／D' },
+      { id: 'exclude', label: '先不要講的', type: 'textarea', placeholder: '例如：上線日期；沒有就填「無」' },
+      { id: 'unknown', label: '❓還不確定的', type: 'textarea', placeholder: '例如：正式功能與試用方式；沒有就填「無」' }
+    ];
+    const fieldHost = document.getElementById('material-fields');
+    FIELDS.forEach((field, index) => {
+      if (index === 6) {
+        const divider = document.createElement('p');
+        divider.className = 'divider-label';
+        divider.textContent = '寫貼文前，再確認這兩件事';
+        fieldHost.append(divider);
+      }
+      const wrapper = document.createElement('div');
+      wrapper.className = 'field';
+      const label = document.createElement('label');
+      label.className = 'field-label';
+      label.htmlFor = field.id;
+      label.innerHTML = `<span class="field-number">${String(index + 1).padStart(2, '0')}</span>${field.label}${field.hint ? `<span class="field-hint">${field.hint}</span>` : ''}`;
+      wrapper.append(label);
+      if (field.type === 'topic') {
+        const row = document.createElement('div');
+        row.className = 'topic-row';
+        const input = document.createElement('input');
+        input.id = field.id;
+        input.placeholder = field.placeholder;
+        const select = document.createElement('select');
+        select.id = 'post-type';
+        const typeLabel = document.createElement('label');
+        typeLabel.className = 'topic-type-label';
+        typeLabel.htmlFor = 'post-type';
+        typeLabel.textContent = '貼文類型';
+        POST_TYPES.forEach(type => {
+          const option = document.createElement('option');
+          option.textContent = type;
+          select.append(option);
+        });
+        const typeGroup = document.createElement('div');
+        typeGroup.append(typeLabel, select);
+        row.append(input, typeGroup);
+        wrapper.append(row);
+      } else {
+        const control = document.createElement(field.type === 'textarea' ? 'textarea' : 'input');
+        control.id = field.id;
+        if (field.type !== 'textarea') control.type = field.type === 'date' ? 'date' : 'text';
+        if (field.placeholder) control.placeholder = field.placeholder;
+        wrapper.append(control);
+        if (field.id === 'visual') {
+          const picker = document.createElement('div');
+          picker.className = 'media-picker';
+          picker.innerHTML = '<label for="format-select">呈現形式</label><select id="format-select"><option>純文字</option><option>單圖</option><option>輪播</option><option>影片</option></select><label for="media-input">加入照片或影片</label><input id="media-input" type="file" accept="image/*,video/*" multiple><p class="media-help">可選多個檔案；拖動或用箭頭調整輪播順序。素材只保存在這個瀏覽器，複製 HTML 檔不會帶走照片或影片。</p><div class="media-strip" id="media-strip"></div><p class="form-message" id="media-status" role="status"></p>';
+          wrapper.append(picker);
+        }
+      }
+      fieldHost.append(wrapper);
+    });
+    const promptAction = document.createElement('div');
+    promptAction.className = 'action-row';
+    promptAction.innerHTML = '<div class="dialog-actions"><button class="primary-action" id="build-prompt" type="button">🧩 組好指令</button><button class="secondary-action" id="open-import" type="button">📥 貼回 AI 寫好的</button><button class="secondary-action" id="save-post" type="button">💾 存檔</button></div><p class="form-message" id="prompt-error" role="status"></p><p class="dialog-status" id="storage-status" role="status"></p>';
+    fieldHost.append(promptAction);
+    const tabHost = document.getElementById('platform-tabs');
+    const editor = document.getElementById('post-editor');
+    const editorLabel = document.querySelector('.editor-label');
+    const characterCount = document.getElementById('character-count');
+    const characterLimit = document.getElementById('character-limit');
+    const LIMITS_KEY = 'courtmate-day6-character-limits-v1';
+    let characterLimits = {};
+    try { characterLimits = JSON.parse(localStorage.getItem(LIMITS_KEY) || '{}') || {}; } catch (_) { characterLimits = {}; }
+    function updateCharacterCount() {
+      const count = Array.from(editor.value).length;
+      const limit = Number(characterLimits[currentPlatform]) || 0;
+      const over = limit > 0 && count > limit;
+      characterCount.textContent = `${count} 字${limit ? `／上限 ${limit}` : ''}${over ? '，超過了' : ''}`;
+      characterCount.classList.toggle('count-over', over);
+      characterLimit.value = limit || '';
+    }
+    characterLimit.addEventListener('change', () => {
+      const limit = Math.max(0, Math.floor(Number(characterLimit.value) || 0));
+      if (limit) characterLimits[currentPlatform] = limit;
+      else delete characterLimits[currentPlatform];
+      try { localStorage.setItem(LIMITS_KEY, JSON.stringify(characterLimits)); } catch (_) { /* 本次仍可計數 */ }
+      updateCharacterCount();
+    });
+    const phone = document.getElementById('phone-preview');
+    const posts = Object.fromEntries(PLATFORMS.map(platform => [platform, '']));
+    let currentPlatform = 'IG';
+    let fbExpanded = false;
+    let mediaItems = [];
+    let mediaSlide = 0;
+    let mediaLoadVersion = 0;
+    const mediaUrls = new Map();
+    const mediaDbPromise = openMediaDatabase();
+
+    function openMediaDatabase() {
+      if (typeof indexedDB === 'undefined') return Promise.resolve(null);
+      return new Promise(resolve => {
+        try {
+          const request = indexedDB.open('courtmate-day6-media-v1', 1);
+          request.onupgradeneeded = () => request.result.createObjectStore('files', { keyPath: 'id' });
+          request.onsuccess = () => resolve(request.result);
+          request.onerror = () => resolve(null);
+          request.onblocked = () => resolve(null);
+        } catch (_) { resolve(null); }
+      });
+    }
+
+    async function storeMediaFile(item, blob) {
+      const database = await mediaDbPromise;
+      if (!database) throw new Error('此瀏覽器無法儲存媒體素材');
+      return new Promise((resolve, reject) => {
+        const transaction = database.transaction('files', 'readwrite');
+        transaction.objectStore('files').put({ id: item.id, blob });
+        transaction.oncomplete = resolve;
+        transaction.onerror = () => reject(transaction.error || new Error('素材儲存失敗'));
+        transaction.onabort = () => reject(transaction.error || new Error('素材儲存中斷'));
+      });
+    }
+
+    async function loadMediaFile(id) {
+      const database = await mediaDbPromise;
+      if (!database) return null;
+      return new Promise(resolve => {
+        try {
+          const request = database.transaction('files').objectStore('files').get(id);
+          request.onsuccess = () => resolve(request.result?.blob || null);
+          request.onerror = () => resolve(null);
+        } catch (_) { resolve(null); }
+      });
+    }
+
+    function node(tag, className, content) {
+      const element = document.createElement(tag);
+      if (className) element.className = className;
+      if (content !== undefined) element.textContent = content;
+      return element;
+    }
+
+    function mediaFrame(className) {
+      if (document.getElementById('format-select').value === '純文字') return null;
+      const item = mediaItems[mediaSlide];
+      if (!item || !mediaUrls.has(item.id)) return null;
+      const frame = node('div', className + ' media-frame');
+      const media = node(item.type.startsWith('video/') ? 'video' : 'img');
+      media.src = mediaUrls.get(item.id);
+      if (media.tagName === 'VIDEO') {
+        media.controls = true;
+        media.playsInline = true;
+        media.preload = 'metadata';
+      } else {
+        media.alt = item.name;
+      }
+      frame.append(media);
+      if (mediaItems.length > 1 && document.getElementById('format-select').value === '輪播') {
+        const tools = node('div', 'slide-tools');
+        const previous = node('button', 'slide-control', '‹');
+        previous.type = 'button';
+        previous.setAttribute('aria-label', '上一張素材');
+        previous.addEventListener('click', () => { mediaSlide = (mediaSlide - 1 + mediaItems.length) % mediaItems.length; renderPreview(); });
+        const count = node('span', 'slide-count', `${mediaSlide + 1} / ${mediaItems.length}`);
+        const next = node('button', 'slide-control', '›');
+        next.type = 'button';
+        next.setAttribute('aria-label', '下一張素材');
+        next.addEventListener('click', () => { mediaSlide = (mediaSlide + 1) % mediaItems.length; renderPreview(); });
+        tools.append(previous, count, next);
+        frame.append(tools);
+      }
+      return frame;
+    }
+
+    function avatar() { return node('div', 'avatar', 'C'); }
+
+    function socialHead(subtitle) {
+      const head = node('div', 'social-head');
+      const name = node('div', 'social-name', BRAND.name);
+      name.append(node('small', '', subtitle));
+      head.append(avatar(), name);
+      return head;
+    }
+
+    function previewCopy() {
+      const value = posts[currentPlatform].trim();
+      return node('div', 'preview-text' + (value ? '' : ' empty-copy'), value || '貼文內容會顯示在這裡。');
+    }
+
+    function renderPreview() {
+      const topic = document.getElementById('topic').value.trim() || '這篇的主題';
+      const visual = document.getElementById('visual').value.trim();
+      phone.replaceChildren(node('div', 'phone-top'));
+      phone.firstChild.append(node('div', 'notch'));
+      phone.setAttribute('aria-label', currentPlatform + ' 手機貼文預覽');
+
+      if (currentPlatform === 'IG') {
+        phone.append(socialHead(BRAND.account));
+        const picture = mediaFrame('');
+        if (picture) phone.append(picture);
+        else {
+          const placeholder = node('div', 'mock-image');
+          placeholder.append(node('div', 'court-line'));
+          placeholder.append(node('span', 'mock-chip', visual || '畫面素材待製作'));
+          placeholder.append(node('div', 'mock-copy', topic));
+          phone.append(placeholder);
+        }
+        phone.append(node('div', 'social-icons', '♡ ◯ ➤'));
+        const caption = node('div', 'social-caption');
+        caption.append(node('strong', '', BRAND.name + ' '), previewCopy());
+        phone.append(caption);
+      } else if (currentPlatform === 'FB') {
+        phone.append(socialHead('剛剛 · 示意貼文'));
+        const body = node('div', 'fb-body');
+        const full = editor.value.trim();
+        const short = Array.from(full).slice(0, 110).join('');
+        body.append(node('span', 'preview-text', full.length > 110 && !fbExpanded ? short + '…' : full || '貼文文字會顯示在這裡'));
+        if (full.length > 110) {
+          const more = node('button', 'secondary-action', fbExpanded ? '顯示較少' : '顯示更多');
+          more.type = 'button';
+          more.addEventListener('click', () => { fbExpanded = !fbExpanded; renderPreview(); });
+          body.append(more);
+        }
+        phone.append(body);
+        phone.append(mediaFrame('fb-media') || node('div', 'fb-image', topic));
+        phone.append(node('div', 'fb-actions', '讚　　　　留言　　　　分享'));
+      } else if (currentPlatform === 'LINE') {
+        phone.append(socialHead('官方帳號尚未建立'));
+        const screen = node('div', 'line-screen');
+        screen.append(node('div', 'line-date', '課堂預覽'));
+        const row = node('div', 'line-row');
+        row.append(avatar());
+        const bubble = node('div', 'line-bubble');
+        bubble.append(previewCopy());
+        const lineMedia = mediaFrame('');
+        if (lineMedia) bubble.append(lineMedia);
+        row.append(bubble);
+        row.append(node('span', 'line-time', '預覽 ' + new Date().toLocaleTimeString('zh-TW', { hour: '2-digit', minute: '2-digit', hour12: false })));
+        screen.append(row);
+        phone.append(screen);
+      } else {
+        const post = node('div', 'threads-post');
+        post.append(avatar());
+        const content = node('div', 'threads-content');
+        content.append(node('div', 'threads-user', BRAND.name + ' · 帳號待確認'));
+        content.append(previewCopy());
+        const threadsMedia = mediaFrame('');
+        if (threadsMedia) content.append(threadsMedia);
+        content.append(node('div', 'threads-actions', '♡ ◯ ↗'));
+        post.append(content);
+        phone.append(post);
+      }
+    }
+
+    function switchPlatform(platform) {
+      posts[currentPlatform] = editor.value;
+      currentPlatform = platform;
+      editor.value = posts[platform];
+      editorLabel.textContent = platform + ' 貼文內容';
+      Array.from(tabHost.children).forEach(tab => {
+        const selected = tab.textContent === platform;
+        tab.classList.toggle('active', selected);
+        tab.setAttribute('aria-selected', String(selected));
+      });
+      renderPreview();
+      updateCharacterCount();
+      autoSaveDraft();
+    }
+
+    PLATFORMS.forEach(platform => {
+      const tab = node('button', 'tab', platform);
+      tab.type = 'button';
+      tab.role = 'tab';
+      tab.setAttribute('aria-selected', String(platform === currentPlatform));
+      tab.addEventListener('click', () => switchPlatform(platform));
+      tabHost.append(tab);
+    });
+    editor.addEventListener('input', () => {
+      posts[currentPlatform] = editor.value;
+      renderPreview();
+      updateCharacterCount();
+      autoSaveDraft();
+    });
+    document.getElementById('topic').addEventListener('input', renderPreview);
+    document.getElementById('visual').addEventListener('input', renderPreview);
+    fieldHost.addEventListener('input', autoSaveDraft);
+    fieldHost.addEventListener('change', autoSaveDraft);
+    fieldHost.addEventListener('submit', event => event.preventDefault());
+
+    const mediaStatus = document.getElementById('media-status');
+    const mediaStrip = document.getElementById('media-strip');
+    const formatSelect = document.getElementById('format-select');
+    function moveMedia(from, to) {
+      if (from === to || from < 0 || to < 0 || from >= mediaItems.length || to >= mediaItems.length) return;
+      const [item] = mediaItems.splice(from, 1);
+      mediaItems.splice(to, 0, item);
+      mediaSlide = to;
+      renderMediaStrip();
+      renderPreview();
+      autoSaveDraft();
+    }
+
+    function renderMediaStrip() {
+      mediaStrip.replaceChildren();
+      mediaItems.forEach((item, index) => {
+        const card = node('div', 'media-item');
+        card.draggable = true;
+        card.addEventListener('dragstart', event => event.dataTransfer.setData('text/plain', String(index)));
+        card.addEventListener('dragover', event => event.preventDefault());
+        card.addEventListener('drop', event => {
+          event.preventDefault();
+          moveMedia(Number(event.dataTransfer.getData('text/plain')), index);
+        });
+        if (item.type.startsWith('image/') && mediaUrls.has(item.id)) {
+          const thumb = node('img', 'media-thumb');
+          thumb.src = mediaUrls.get(item.id);
+          thumb.alt = item.name;
+          card.append(thumb);
+        } else {
+          card.append(node('div', 'media-thumb media-thumb-empty', item.type.startsWith('video/') ? '▶' : '▧'));
+        }
+        const info = node('div', 'media-info');
+        info.append(node('strong', '', item.name));
+        info.append(node('small', '', `第 ${index + 1} 張 · ${item.type.startsWith('video/') ? '影片' : '照片'}`));
+        const controls = node('div', 'media-controls');
+        const left = node('button', '', '←');
+        left.type = 'button'; left.disabled = index === 0; left.setAttribute('aria-label', '將 ' + item.name + ' 往前移');
+        left.addEventListener('click', () => moveMedia(index, index - 1));
+        const right = node('button', '', '→');
+        right.type = 'button'; right.disabled = index === mediaItems.length - 1; right.setAttribute('aria-label', '將 ' + item.name + ' 往後移');
+        right.addEventListener('click', () => moveMedia(index, index + 1));
+        const remove = node('button', '', '×');
+        remove.type = 'button'; remove.setAttribute('aria-label', '移除 ' + item.name);
+        remove.addEventListener('click', () => {
+          mediaItems.splice(index, 1);
+          const url = mediaUrls.get(item.id);
+          if (url) URL.revokeObjectURL(url);
+          mediaUrls.delete(item.id);
+          mediaSlide = Math.min(mediaSlide, Math.max(0, mediaItems.length - 1));
+          if (!mediaItems.length) formatSelect.value = '純文字';
+          renderMediaStrip(); renderPreview(); autoSaveDraft();
+        });
+        controls.append(left, right, remove);
+        card.append(info, controls);
+        mediaStrip.append(card);
+      });
+    }
+
+    function clearMediaUrls() {
+      mediaLoadVersion++;
+      mediaUrls.forEach(url => URL.revokeObjectURL(url));
+      mediaUrls.clear();
+    }
+
+    async function hydrateMedia() {
+      const version = ++mediaLoadVersion;
+      let missing = 0;
+      for (const item of mediaItems) {
+        const blob = await loadMediaFile(item.id);
+        if (version !== mediaLoadVersion) return;
+        if (blob) mediaUrls.set(item.id, URL.createObjectURL(blob));
+        else missing++;
+      }
+      renderMediaStrip();
+      renderPreview();
+      mediaStatus.textContent = missing ? `${missing} 個素材無法從此瀏覽器讀取；原貼文文字仍保留。` : '';
+    }
+
+    document.getElementById('media-input').addEventListener('change', async event => {
+      const files = Array.from(event.target.files || []);
+      event.target.value = '';
+      if (!files.length) return;
+      const selectionVersion = mediaLoadVersion;
+      const database = await mediaDbPromise;
+      if (selectionVersion !== mediaLoadVersion) return;
+      if (!database) {
+        mediaStatus.textContent = '此瀏覽器無法保存照片或影片，請改用支援本機儲存的瀏覽器。';
+        return;
+      }
+      let added = 0;
+      for (const file of files) {
+        if (!file.type.startsWith('image/') && !file.type.startsWith('video/')) continue;
+        const item = { id: globalThis.crypto?.randomUUID?.() || `${Date.now()}-${Math.random()}`, name: file.name, type: file.type, size: file.size };
+        try {
+          await storeMediaFile(item, file);
+          if (selectionVersion !== mediaLoadVersion) return;
+          mediaItems.push(item);
+          mediaUrls.set(item.id, URL.createObjectURL(file));
+          added++;
+        } catch (_) {
+          mediaStatus.textContent = `「${file.name}」無法保存；請檢查瀏覽器儲存空間。`;
+        }
+      }
+      if (added) {
+        formatSelect.value = mediaItems.length > 1 ? '輪播' : mediaItems[0].type.startsWith('video/') ? '影片' : '單圖';
+        mediaSlide = 0;
+        renderMediaStrip(); renderPreview(); autoSaveDraft();
+        mediaStatus.textContent = `已加入 ${added} 個素材，請確認順序與右側預覽。`;
+      } else if (!mediaStatus.textContent) {
+        mediaStatus.textContent = '沒有可加入的照片或影片。';
+      }
+    });
+    formatSelect.addEventListener('change', () => { mediaSlide = 0; renderPreview(); autoSaveDraft(); });
+
+    const SETTINGS_KEY = 'courtmate-day6-settings-v1';
+    const settingsDialog = document.getElementById('settings-dialog');
+    const promptDialog = document.getElementById('prompt-dialog');
+    const brandSpecInput = document.getElementById('brand-spec');
+    const checklistInput = document.getElementById('checklist');
+    const promptOutput = document.getElementById('prompt-output');
+    const promptError = document.getElementById('prompt-error');
+    let settings = { brandSpec: '', checklist: '' };
+    try {
+      const saved = JSON.parse(localStorage.getItem(SETTINGS_KEY) || 'null');
+      if (saved && typeof saved.brandSpec === 'string' && typeof saved.checklist === 'string') settings = saved;
+    } catch (_) { /* 無法讀取時保留本次頁面的設定 */ }
+
+    document.getElementById('open-settings').addEventListener('click', () => {
+      brandSpecInput.value = settings.brandSpec;
+      checklistInput.value = settings.checklist;
+      document.getElementById('settings-status').textContent = '';
+      settingsDialog.showModal();
+    });
+    document.querySelectorAll('[data-close]').forEach(button => {
+      button.addEventListener('click', () => document.getElementById(button.dataset.close).close());
+    });
+    document.getElementById('save-settings').addEventListener('click', () => {
+      settings = { brandSpec: brandSpecInput.value.trim(), checklist: checklistInput.value.trim() };
+      const status = document.getElementById('settings-status');
+      try {
+        localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings));
+        status.textContent = '設定已儲存在這個瀏覽器。';
+      } catch (_) {
+        status.textContent = '此瀏覽器無法保存設定；本次仍可組指令，重新開啟後需再貼一次。';
+      }
+    });
+
+    function dateWithWeekday(value) {
+      if (!value) return '未提供（沒有真實日期時請勿補寫）';
+      const [year, month, day] = value.split('-').map(Number);
+      const weekday = '日一二三四五六'[new Date(Date.UTC(year, month - 1, day)).getUTCDay()];
+      return `${year}/${String(month).padStart(2, '0')}/${String(day).padStart(2, '0')}（${weekday}）`;
+    }
+
+    function assemblePrompt() {
+      const lines = FIELDS.map(field => {
+        const value = document.getElementById(field.id).value.trim();
+        if (field.id === 'topic') return `1. 這篇要說什麼／類型：${value}（${document.getElementById('post-type').value}）`;
+        if (field.id === 'date') return `5. 日期：${dateWithWeekday(value)}`;
+        const number = FIELDS.findIndex(item => item.id === field.id) + 1;
+        return `${number}. ${field.label}：${value || '未提供，請勿自行補全'}`;
+      });
+      return [
+        '（這段只要回覆文字，不要建立或修改任何檔案。）',
+        '',
+        `你是 ${BRAND.name} 的小編。請依下列品牌規格與素材卡，分別寫 ${PLATFORMS.join('、')} 的貼文，每個平台一篇。`,
+        '現階段主要目標是驗證找球友需求並收集回饋，不要自行加入下載、報名或付費引導。',
+        '',
+        '寫作規則：',
+        '1. 素材卡沒有的事不要寫，不要自行補日期、功能、價格、活動、帳號、連結、成功案例或合作對象。',
+        '2. 只能在某個平台說的資訊，只放在該平台；沒有指定時不要假設有平台限定優惠。',
+        '3.「先不要講的」不能出現在任何一篇公開貼文中。',
+        '4.「❓還不確定的」不能寫成已確認事實；完成貼文後，在【要問我的】列出這些待確認事項。',
+        '5. 若素材不足以完成某篇，請說明缺少什麼，不要猜。',
+        '',
+        '回覆格式：',
+        ...PLATFORMS.map(platform => `【${platform}】`),
+        '【要問我的】',
+        '',
+        '品牌規格全文：',
+        settings.brandSpec,
+        '',
+        '素材卡：',
+        ...lines,
+        `呈現形式：${formatSelect.value}`,
+        `已選素材（依顯示順序）：${mediaItems.length ? mediaItems.map((item, index) => `${index + 1}. ${item.name}（${item.type}）`).join('；') : '無'}`,
+        '照片與影片檔案沒有附在這段文字指令中；請只根據素材卡中已描述的畫面寫文案，不要猜測檔案內容。',
+        ...(settings.checklist ? ['', '寫完照這張清單檢查；有 ❌ 先自己改好。若項目不適用，請標示不適用，不要虛構資訊。', settings.checklist] : [])
+      ].join('\n');
+    }
+
+    document.getElementById('build-prompt').addEventListener('click', () => {
+      promptError.textContent = '';
+      if (!settings.brandSpec) {
+        promptError.textContent = '請先到右上角「設定」貼上品牌規格並儲存。';
+        document.getElementById('open-settings').focus();
+        return;
+      }
+      for (const id of ['topic', 'exclude', 'unknown']) {
+        if (!document.getElementById(id).value.trim()) {
+          promptError.textContent = id === 'topic' ? '請先寫這篇的主題。' : '請填「先不要講的」與「還不確定的」；沒有就填「無」。';
+          document.getElementById(id).focus();
+          return;
+        }
+      }
+      promptOutput.value = assemblePrompt();
+      document.getElementById('copy-status').textContent = '';
+      promptDialog.showModal();
+    });
+    document.getElementById('copy-prompt').addEventListener('click', async () => {
+      const status = document.getElementById('copy-status');
+      try {
+        await navigator.clipboard.writeText(promptOutput.value);
+        status.textContent = '指令已複製，可以貼給 AI。';
+      } catch (_) {
+        promptOutput.focus();
+        promptOutput.select();
+        try {
+          status.textContent = document.execCommand('copy') ? '指令已複製，可以貼給 AI。' : '瀏覽器無法自動複製，請手動複製已選取的文字。';
+        } catch (_) {
+          status.textContent = '瀏覽器無法自動複製，請手動複製已選取的文字。';
+        }
+      }
+    });
+    const importDialog = document.getElementById('import-dialog');
+    document.getElementById('open-import').addEventListener('click', () => {
+      document.getElementById('import-status').textContent = '';
+      document.getElementById('import-questions').hidden = true;
+      importDialog.showModal();
+    });
+    function parsePlatformReply(raw) {
+      const sections = {};
+      const pattern = /^\s*【(FB|IG|LINE|Threads|要問我的)】\s*$/gim;
+      const matches = [...raw.matchAll(pattern)];
+      for (let i = 0; i < matches.length; i++) {
+        const title = matches[i][1].toLowerCase() === 'threads' ? 'Threads' : matches[i][1].toUpperCase() === '要問我的' ? '要問我的' : matches[i][1].toUpperCase();
+        if (sections[title] !== undefined) return { error: `「${title}」標題重複，請先整理後再貼回。` };
+        sections[title] = raw.slice(matches[i].index + matches[i][0].length, matches[i + 1]?.index ?? raw.length).trim();
+      }
+      const platforms = PLATFORMS.filter(platform => sections[platform]);
+      if (!platforms.length) return { error: '找不到含內容的平台標題。請使用單獨一行的【FB】【IG】【LINE】或【Threads】。' };
+      if (platforms.some(platform => !sections[platform])) return { error: '有平台標題沒有內容，請先檢查。' };
+      return { sections, platforms };
+    }
+    document.getElementById('apply-import').addEventListener('click', () => {
+      const result = parsePlatformReply(document.getElementById('import-text').value);
+      const status = document.getElementById('import-status');
+      if (result.error) { status.textContent = result.error; return; }
+      const occupied = result.platforms.filter(platform => (platform === currentPlatform ? editor.value : posts[platform]).trim());
+      if (occupied.length && !confirm(`將覆蓋 ${occupied.join('、')} 現有文字。確定要貼回嗎？`)) return;
+      posts[currentPlatform] = editor.value;
+      result.platforms.forEach(platform => { posts[platform] = result.sections[platform]; });
+      showPlatform(currentPlatform);
+      autoSaveDraft();
+      const questions = document.getElementById('import-questions');
+      questions.textContent = result.sections['要問我的'] ? `要問我的：\n${result.sections['要問我的']}` : '';
+      questions.hidden = !result.sections['要問我的'];
+      status.textContent = `已分到 ${result.platforms.join('、')}。${PLATFORMS.filter(platform => !result.platforms.includes(platform)).length ? '其他平台維持原文。' : ''}`;
+    });
+    const POSTS_KEY = 'courtmate-day6-posts-v1';
+    const DRAFT_KEY = 'courtmate-day6-draft-v1';
+    const POST_STATES = ['草稿', '等確認', '完成'];
+    const storageStatus = document.getElementById('storage-status');
+    const postsDialog = document.getElementById('posts-dialog');
+    let savedPosts = readStored(POSTS_KEY, []);
+    if (!Array.isArray(savedPosts)) savedPosts = [];
+    let currentSavedId = null;
+
+    function readStored(key, fallback) {
+      try {
+        const value = localStorage.getItem(key);
+        return value ? JSON.parse(value) : fallback;
+      } catch (_) { return fallback; }
+    }
+
+    function writeStored(key, value) {
+      try {
+        localStorage.setItem(key, JSON.stringify(value));
+        return true;
+      } catch (_) {
+        storageStatus.textContent = '此瀏覽器無法保存資料。請先複製貼文文字，再檢查瀏覽器的儲存設定。';
+        return false;
+      }
+    }
+
+    function capturePost() {
+      posts[currentPlatform] = editor.value;
+      return {
+        id: currentSavedId,
+        card: Object.fromEntries(FIELDS.map(field => [field.id, document.getElementById(field.id).value])),
+        type: document.getElementById('post-type').value,
+        format: formatSelect.value,
+        media: mediaItems.map(({ id, name, type, size }) => ({ id, name, type, size })),
+        status: savedPosts.find(item => item.id === currentSavedId)?.status || '草稿',
+        posts: Object.fromEntries(PLATFORMS.map(platform => [platform, posts[platform]])),
+        platform: currentPlatform
+      };
+    }
+
+    function showPlatform(platform) {
+      currentPlatform = PLATFORMS.includes(platform) ? platform : 'IG';
+      editor.value = posts[currentPlatform];
+      editorLabel.textContent = currentPlatform + ' 貼文內容';
+      Array.from(tabHost.children).forEach(tab => {
+        const selected = tab.textContent === currentPlatform;
+        tab.classList.toggle('active', selected);
+        tab.setAttribute('aria-selected', String(selected));
+      });
+      renderPreview();
+      updateCharacterCount();
+    }
+
+    function applyPost(item) {
+      FIELDS.forEach(field => { document.getElementById(field.id).value = item.card?.[field.id] || ''; });
+      document.getElementById('post-type').value = POST_TYPES.includes(item.type) ? item.type : POST_TYPES[0];
+      PLATFORMS.forEach(platform => { posts[platform] = item.posts?.[platform] || ''; });
+      clearMediaUrls();
+      mediaItems = Array.isArray(item.media) ? item.media.filter(media => media && typeof media.id === 'string' && typeof media.type === 'string') : [];
+      mediaSlide = 0;
+      formatSelect.value = ['純文字', '單圖', '輪播', '影片'].includes(item.format) ? item.format : '純文字';
+      renderMediaStrip();
+      currentSavedId = item.id || null;
+      showPlatform(item.platform);
+      if (mediaItems.length) hydrateMedia();
+    }
+
+    function autoSaveDraft() {
+      writeStored(DRAFT_KEY, capturePost());
+    }
+
+    function postName(item) {
+      const date = item.card.date ? item.card.date.replaceAll('-', '/') : '未填日期';
+      return `${date}｜${item.card.topic.trim() || '未命名貼文'}`;
+    }
+
+    document.getElementById('save-post').addEventListener('click', () => {
+      const item = capturePost();
+      if (!item.card.topic.trim()) {
+        storageStatus.textContent = '請先填第一格「這篇要說什麼」，再存檔。';
+        document.getElementById('topic').focus();
+        return;
+      }
+      item.id ||= (globalThis.crypto?.randomUUID?.() || `${Date.now()}-${Math.random()}`);
+      item.name = postName(item);
+      item.savedAt = new Date().toISOString();
+      const next = savedPosts.filter(saved => saved.id !== item.id);
+      next.unshift(item);
+      if (!writeStored(POSTS_KEY, next)) return;
+      savedPosts = next;
+      currentSavedId = item.id;
+      autoSaveDraft();
+      storageStatus.textContent = `已存檔：${item.name}`;
+    });
+
+    function renderSavedPosts() {
+      const list = document.getElementById('post-list');
+      list.replaceChildren();
+      POST_STATES.forEach(state => {
+        const column = node('section', 'board-column');
+        const items = savedPosts.filter(item => (POST_STATES.includes(item.status) ? item.status : '草稿') === state);
+        column.append(node('h3', '', `${state} · ${items.length}`));
+        if (!items.length) column.append(node('p', 'empty-list', '目前沒有貼文'));
+        items.forEach(item => {
+        const row = node('div', 'post-item');
+        const description = node('div');
+        description.append(node('strong', '', item.name));
+        description.append(node('small', '', '存檔時間：' + new Date(item.savedAt).toLocaleString('zh-TW', { hour12: false })));
+        const actions = node('div', 'post-item-actions');
+        const stateSelect = node('select');
+        stateSelect.setAttribute('aria-label', `「${item.name}」的狀態`);
+        POST_STATES.forEach(value => { const option = node('option', '', value); option.value = value; stateSelect.append(option); });
+        stateSelect.value = state;
+        stateSelect.addEventListener('change', () => {
+          const next = savedPosts.map(saved => saved.id === item.id ? { ...saved, status: stateSelect.value } : saved);
+          if (!writeStored(POSTS_KEY, next)) { stateSelect.value = state; return; }
+          savedPosts = next;
+          document.getElementById('posts-status').textContent = `「${item.name}」已移到${stateSelect.value}。`;
+          renderSavedPosts();
+        });
+        const open = node('button', 'secondary-action', '打開');
+        open.type = 'button';
+        open.addEventListener('click', () => {
+          if (hasContent() && !confirm('目前畫面上的內容會被這篇貼文取代。確定要打開嗎？')) return;
+          applyPost(item);
+          autoSaveDraft();
+          storageStatus.textContent = `已打開：${item.name}`;
+          postsDialog.close();
+        });
+        const remove = node('button', 'secondary-action danger-action', '刪除');
+        remove.type = 'button';
+        remove.addEventListener('click', () => {
+          if (!confirm(`確定刪除「${item.name}」嗎？這個瀏覽器中的存檔會被移除。`)) return;
+          const next = savedPosts.filter(saved => saved.id !== item.id);
+          if (!writeStored(POSTS_KEY, next)) return;
+          savedPosts = next;
+          if (currentSavedId === item.id) {
+            currentSavedId = null;
+            autoSaveDraft();
+          }
+          document.getElementById('posts-status').textContent = `已刪除：${item.name}`;
+          renderSavedPosts();
+        });
+        actions.append(open, remove);
+        row.append(description, stateSelect, actions);
+        column.append(row);
+        });
+        list.append(column);
+      });
+    }
+
+    function hasContent() {
+      return FIELDS.some(field => document.getElementById(field.id).value.trim()) ||
+        PLATFORMS.some(platform => posts[platform].trim()) || editor.value.trim() || mediaItems.length > 0;
+    }
+
+    document.getElementById('open-posts').addEventListener('click', () => {
+      document.getElementById('posts-status').textContent = '';
+      renderSavedPosts();
+      postsDialog.showModal();
+    });
+    document.getElementById('new-post').addEventListener('click', () => {
+      if (hasContent() && !confirm('要清空目前畫面，開始新的一篇嗎？已存檔的貼文仍會保留。')) return;
+      applyPost({ card: {}, type: POST_TYPES[0], posts: {}, platform: 'IG' });
+      autoSaveDraft();
+      storageStatus.textContent = '已開始新的一篇。';
+    });
+
+    const draft = readStored(DRAFT_KEY, null);
+    if (draft && typeof draft === 'object' && draft.card && draft.posts) {
+      applyPost(draft);
+      storageStatus.textContent = '已恢復上次自動暫存的內容。';
+    }
+    renderPreview();
+  </script>
+</body>
+</html>
