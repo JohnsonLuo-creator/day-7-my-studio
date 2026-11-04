@@ -19,6 +19,58 @@
       --focus: #a56a0a;
       --shadow: 0 16px 42px rgba(23, 67, 73, .08);
     }
+    .ai-settings-group { min-width: 0; margin: 18px 0; padding: 14px; border: 1px solid var(--line); border-radius: 9px; }
+    .ai-settings-group legend { font-weight: 700; color: var(--main-dark); }
+    #phone-view[hidden], #review-view[hidden] { display: none; }
+    .review-tabs { display: flex; gap: 5px; padding: 12px; border-bottom: 1px solid var(--line); background: #f4f8f7; }
+    .review-tabs button { flex: 1; border: 1px solid var(--line); border-radius: 7px; padding: 10px 7px; background: white; color: var(--main-dark); font-size: 13px; font-weight: 700; cursor: pointer; }
+    .review-tabs button[aria-selected="true"] { background: var(--main); border-color: var(--main); color: white; }
+    .review-body { padding: 18px; }
+    .review-body h2 { font-size: 20px; margin-bottom: 12px; }
+    .review-summary { border-left: 4px solid var(--ball); background: #f4f8f7; padding: 12px; font-size: 14px; line-height: 1.65; font-weight: 700; }
+    .review-body details { margin: 18px 0; }
+    .review-body summary { cursor: pointer; font-size: 13px; font-weight: 700; color: var(--main-dark); }
+    .review-body .dialog-actions { margin: 12px 0; }
+    .review-body button:disabled { opacity: .5; cursor: default; }
+    .change-card { border: 1px solid var(--line); border-radius: 10px; padding: 12px; margin: 14px 0; }
+    .change-heading { display: flex; justify-content: space-between; gap: 8px; font-size: 13px; color: var(--main-dark); }
+    .change-state { color: var(--muted); font-size: 12px; }
+    .change-reason { font-size: 13px; line-height: 1.6; }
+    .change-before, .change-after { border-left: 3px solid #c4887d; background: #fcf2ef; padding: 10px; margin: 9px 0; }
+    .change-after { border-color: var(--main); background: #edf6f2; }
+    .change-label { font-size: 11px; color: var(--muted); }
+    .change-before p, .change-after p, .change-card > p { white-space: pre-wrap; overflow-wrap: anywhere; font-size: 13px; line-height: 1.7; margin: 5px 0 0; }
+    .review-platform { display: block; border: 0; background: transparent; color: var(--main-dark); font-weight: 800; cursor: pointer; text-align: left; }
+    #fix-raw[hidden] { display: none; }
+    #fix-status { white-space: pre-wrap; }
+    #fix-status.ai-error { color: #a32020; }
+    #fix-report:disabled { opacity: .55; cursor: default; }
+    #check-status.ai-error { color: #a32020; }
+    #check-status, #check-notice { white-space: pre-wrap; }
+    .check-line { white-space: pre-wrap; overflow-wrap: anywhere; margin: 6px 0; padding: 9px 11px; border-radius: 7px; font-size: 13px; line-height: 1.65; }
+    h3.check-line { font-size: 16px; color: var(--main-dark); margin-top: 15px; }
+    .check-fail { background: #fce8e8; color: #8b1b1b; }
+    .check-warn { background: #fff2c8; color: #725200; }
+    .assistant-panel { margin-top: 18px; border-top: 1px solid var(--line); padding-top: 18px; }
+    .assistant-panel h3 { font-size: 16px; margin: 0 0 10px; }
+    .assistant-history { max-height: 270px; overflow-y: auto; margin-bottom: 12px; }
+    .assistant-message { margin: 8px 0; padding: 10px 12px; border-radius: 9px; background: #f0f6f4; overflow-wrap: anywhere; }
+    .assistant-message.assistant-user { background: #faf4df; }
+    .assistant-message strong { font-size: 12px; }
+    .assistant-message p { white-space: pre-wrap; margin: 5px 0 0; font-size: 13px; line-height: 1.6; }
+    .assistant-shortcuts, .assistant-compose { display: flex; gap: 7px; flex-wrap: wrap; margin-bottom: 10px; }
+    .assistant-shortcuts button { font-size: 12px; padding: 7px 9px; }
+    .assistant-compose input { flex: 1; min-width: 150px; }
+    .assistant-compose button { flex-shrink: 0; }
+    #assistant-result[hidden] { display: none; }
+    #assistant-status { white-space: pre-wrap; }
+    #assistant-status.ai-error { color: #a32020; }
+    .assistant-panel button:disabled { opacity: .55; cursor: default; }
+    #ai-status { white-space: pre-wrap; }
+    #ai-status.ai-error { color: #a32020; }
+    #ai-usage { overflow-wrap: anywhere; }
+    #ai-raw[hidden] { display: none; }
+    #generate-ai:disabled { opacity: .6; cursor: wait; }
     * { box-sizing: border-box; }
     html { font-family: "PingFang TC", "Noto Sans TC", "Microsoft JhengHei", sans-serif; color: var(--ink); background: var(--bg); }
     body { margin: 0; min-width: 320px; }
@@ -196,9 +248,31 @@
         <div class="count-row"><span id="character-count" role="status">0 字</span><label for="character-limit">此平台字數上限（可選）</label><input id="character-limit" type="number" min="1" step="1" placeholder="未設定"></div>
         <p class="helper">在這裡編輯文字，右側手機會立即更新。切換平台不會清掉其他平台的草稿。</p>
         <p class="helper">編輯內容會自動暫存於這個瀏覽器。按「存檔」可放進「我的貼文」。</p>
+        <section class="assistant-panel" aria-labelledby="assistant-title">
+          <button class="secondary-action" id="undo-ai" type="button" disabled>↩ 復原上一版</button>
+          <button class="secondary-action" id="check-ai" type="button">🔍 檢查官</button>
+          <p class="dialog-status" id="check-status" role="status"></p>
+          <h3 id="assistant-title">💬 AI 小幫手</h3>
+          <div class="assistant-history" id="assistant-history" role="log" aria-label="目前平台的對話紀錄" aria-live="polite"></div>
+          <div class="assistant-shortcuts" aria-label="快捷改文">
+            <button class="secondary-action" type="button" data-assistant-request="短一點">短一點</button>
+            <button class="secondary-action" type="button" data-assistant-request="換開頭">換開頭</button>
+            <button class="secondary-action" type="button" data-assistant-request="少一點 emoji">少一點 emoji</button>
+            <button class="secondary-action" type="button" data-assistant-request="更像範例">更像範例</button>
+          </div>
+          <label class="field-label" for="assistant-input">想怎麼改這篇貼文？</label>
+          <div class="assistant-compose"><input id="assistant-input" type="text" placeholder="例如：把提問放到第一句"><button class="primary-action" id="assistant-send" type="button">送出</button></div>
+          <p class="dialog-status" id="assistant-status" role="status"></p>
+          <textarea id="assistant-result" aria-label="未套用的小幫手修改結果" readonly hidden></textarea>
+        </section>
       </div>
     </section>
     <section class="panel preview" aria-labelledby="preview-title">
+      <div class="review-tabs" role="tablist" aria-label="右側工具">
+        <button id="preview-tab" type="button" role="tab" aria-controls="phone-view" aria-selected="true">手機預覽</button>
+        <button id="review-tab" type="button" role="tab" aria-controls="review-view" aria-selected="false">檢查與修改</button>
+      </div>
+      <div id="phone-view" role="tabpanel" aria-labelledby="preview-tab">
       <div class="panel-head">
         <p class="panel-kicker">右側 · 預覽</p>
         <h2 id="preview-title">手機上會長怎樣？</h2>
@@ -207,6 +281,18 @@
       <div class="preview-area">
         <div class="phone" id="phone-preview" aria-live="polite" aria-label="手機貼文預覽"></div>
         <p class="preview-note">預覽中的名稱、畫面與文字皆為課堂示意；不是已發布貼文。</p>
+      </div>
+      </div>
+      <div id="review-view" class="review-body" role="tabpanel" aria-labelledby="review-tab" hidden>
+        <h2 id="check-title">檢查與修改</h2>
+        <p id="check-summary" class="review-summary" role="status">寫好貼文後，按「檢查官」找出需要修改與確認的地方。</p>
+        <div class="dialog-actions"><button class="secondary-action" id="check-again" type="button">重新檢查</button></div>
+        <p class="dialog-status" id="check-notice" role="status"></p>
+        <details id="report-details" open><summary>逐項檢查結果 · 點平台名稱查看原文</summary><div id="check-report"></div></details>
+        <div class="dialog-actions"><button class="primary-action" id="fix-report" type="button" disabled>產生修改建議</button><button class="secondary-action" id="apply-all-fixes" type="button" disabled>全部採用</button></div>
+        <p class="dialog-status" id="fix-status" role="status"></p>
+        <div id="fix-suggestions" aria-live="polite"></div>
+        <textarea id="fix-raw" aria-label="未套用的修改建議原始回覆" readonly hidden></textarea>
       </div>
     </section>
   </main>
@@ -217,6 +303,24 @@
       <textarea id="brand-spec" placeholder="貼上「品牌規格.md」的全文"></textarea>
       <label for="checklist">檢查清單（可選）</label>
       <textarea id="checklist" placeholder="貼上「通用檢查清單.md」的全文"></textarea>
+      <fieldset class="ai-settings-group"><legend>第一組：OpenRouter</legend>
+      <label for="api-key">AI 金鑰（OpenRouter）</label>
+      <input id="api-key" type="password" autocomplete="off" spellcheck="false" placeholder="只貼在這裡，不要貼給 Codex">
+      <label for="or-model">模型</label>
+      <select id="or-model"><optgroup label="DeepSeek"><option value="deepseek/deepseek-v4.1-flash">deepseek/deepseek-v4.1-flash</option><option value="deepseek/deepseek-v4-pro">deepseek/deepseek-v4-pro</option><option value="deepseek/deepseek-v3.2">deepseek/deepseek-v3.2</option></optgroup><optgroup label="Kimi"><option value="moonshotai/kimi-k2.6">moonshotai/kimi-k2.6</option><option value="moonshotai/kimi-k2.5">moonshotai/kimi-k2.5</option><option value="moonshotai/kimi-k3">moonshotai/kimi-k3</option></optgroup><optgroup label="MiniMax"><option value="minimax/minimax-m3">minimax/minimax-m3</option><option value="minimax/minimax-m2.7">minimax/minimax-m2.7</option><option value="minimax/minimax-m2.5">minimax/minimax-m2.5</option></optgroup></select>
+      <label for="custom-model">或自己打模型名稱</label>
+      <input id="custom-model" type="text" placeholder="有填就優先使用；清空後用上方選單" autocomplete="off" spellcheck="false">
+      <label for="thinking">思考</label>
+      <select id="thinking"><option value="low">少想一點（預設）</option><option value="medium">多想一點</option><option value="high">想很久</option></select>
+      </fieldset>
+      <fieldset class="ai-settings-group"><legend>第二組：Gemini</legend>
+      <label for="gemini-key">Gemini 金鑰</label>
+      <input id="gemini-key" type="password" autocomplete="off" spellcheck="false" placeholder="貼上自己的 Gemini 金鑰">
+      <label for="gemini-model">Gemini 模型</label>
+      <select id="gemini-model"><option>gemini-3.8-flash</option><option>gemini-3.6-flash</option><option>gemini-3.5-flash-lite</option><option>gemini-3.1-flash-lite</option></select>
+      </fieldset>
+      <label for="provider-mode">先用哪一組</label>
+      <select id="provider-mode"><option value="auto">先用 OpenRouter，失敗了自動換 Gemini（預設）</option><option value="gemini">只用 Gemini</option><option value="openrouter">只用 OpenRouter</option></select>
       <div class="dialog-actions"><button class="primary-action" id="save-settings" type="button">儲存設定</button><button class="secondary-action" type="button" data-close="settings-dialog">取消</button></div>
       <p class="dialog-status" id="settings-status" role="status"></p>
     </div>
@@ -226,7 +330,7 @@
     <div class="dialog-body"><label for="import-text">AI 的完整回覆</label><textarea id="import-text" placeholder="【FB】&#10;貼文內容…&#10;【IG】&#10;貼文內容…"></textarea><div class="dialog-actions"><button class="primary-action" id="apply-import" type="button">分到各平台</button><button class="secondary-action" type="button" data-close="import-dialog">關閉</button></div><p class="form-message" id="import-status" role="status"></p><div class="ask-box" id="import-questions" hidden></div></div>
   </dialog>
   <dialog id="prompt-dialog" aria-labelledby="prompt-title">
-    <div class="dialog-head"><div><h2 id="prompt-title">組好的指令</h2><p>複製後貼給 AI，取得文案再貼回各平台編輯框。這個頁面不會直接呼叫 AI。</p></div><button class="icon-close" type="button" data-close="prompt-dialog" aria-label="關閉指令">×</button></div>
+    <div class="dialog-head"><div><h2 id="prompt-title">組好的指令</h2><p>複製後貼給 AI，取得文案再貼回各平台編輯框。AI 連不上時，也可以用這個方式。</p></div><button class="icon-close" type="button" data-close="prompt-dialog" aria-label="關閉指令">×</button></div>
     <div class="dialog-body">
       <label for="prompt-output">請先檢查內容，再複製</label>
       <textarea class="prompt-output" id="prompt-output" readonly></textarea>
@@ -239,6 +343,7 @@
     <div class="dialog-body"><div class="board" id="post-list"></div><p class="dialog-status" id="posts-status" role="status"></p></div>
   </dialog>
   <script>
+    const OPENROUTER_MODEL = 'deepseek/deepseek-v4.1-flash';
     // 課堂設定集中在這裡；正式名稱、帳號與主色尚未定案。
     const BRAND = { name: 'CourtMate', account: '帳號名稱待確認' };
     const PLATFORMS = ['FB', 'IG', 'LINE', 'Threads'];
@@ -306,7 +411,7 @@
     });
     const promptAction = document.createElement('div');
     promptAction.className = 'action-row';
-    promptAction.innerHTML = '<div class="dialog-actions"><button class="primary-action" id="build-prompt" type="button">🧩 組好指令</button><button class="secondary-action" id="open-import" type="button">📥 貼回 AI 寫好的</button><button class="secondary-action" id="save-post" type="button">💾 存檔</button></div><p class="form-message" id="prompt-error" role="status"></p><p class="dialog-status" id="storage-status" role="status"></p>';
+    promptAction.innerHTML = '<button class="primary-action" id="generate-ai" type="button">✨ 讓 AI 寫</button><p class="form-message" id="ai-status" role="status" aria-live="polite"></p><p class="dialog-status" id="ai-usage" role="status"></p><div class="ask-box" id="ai-questions" hidden></div><textarea id="ai-raw" aria-label="AI 原始回覆，可複製後用貼回功能處理" readonly hidden></textarea><div class="dialog-actions"><button class="primary-action" id="build-prompt" type="button">🧩 組好指令</button><button class="secondary-action" id="open-import" type="button">📥 貼回 AI 寫好的</button><button class="secondary-action" id="save-post" type="button">💾 存檔</button></div><p class="form-message" id="prompt-error" role="status"></p><p class="dialog-status" id="storage-status" role="status"></p>';
     fieldHost.append(promptAction);
     const tabHost = document.getElementById('platform-tabs');
     const editor = document.getElementById('post-editor');
@@ -334,6 +439,11 @@
     const phone = document.getElementById('phone-preview');
     const posts = Object.fromEntries(PLATFORMS.map(platform => [platform, '']));
     let currentPlatform = 'IG';
+    let assistantHistories = Object.fromEntries(PLATFORMS.map(platform => [platform, []]));
+    let previousPosts = null;
+    let lastCheckReport = null;
+    let aiBusy = false;
+    let postContextVersion = 0;
     let fbExpanded = false;
     let mediaItems = [];
     let mediaSlide = 0;
@@ -509,6 +619,9 @@
       });
       renderPreview();
       updateCharacterCount();
+      renderAssistant();
+      document.getElementById('assistant-status').textContent = '';
+      document.getElementById('assistant-result').hidden = true;
       autoSaveDraft();
     }
 
@@ -525,11 +638,14 @@
       renderPreview();
       updateCharacterCount();
       autoSaveDraft();
+      refreshReviewState();
     });
     document.getElementById('topic').addEventListener('input', renderPreview);
     document.getElementById('visual').addEventListener('input', renderPreview);
     fieldHost.addEventListener('input', autoSaveDraft);
     fieldHost.addEventListener('change', autoSaveDraft);
+    fieldHost.addEventListener('input', refreshReviewState);
+    fieldHost.addEventListener('change', refreshReviewState);
     fieldHost.addEventListener('submit', event => event.preventDefault());
 
     const mediaStatus = document.getElementById('media-status');
@@ -651,18 +767,32 @@
     const settingsDialog = document.getElementById('settings-dialog');
     const promptDialog = document.getElementById('prompt-dialog');
     const brandSpecInput = document.getElementById('brand-spec');
+    const apiKeyInput = document.getElementById('api-key');
     const checklistInput = document.getElementById('checklist');
     const promptOutput = document.getElementById('prompt-output');
     const promptError = document.getElementById('prompt-error');
-    let settings = { brandSpec: '', checklist: '' };
-    try {
-      const saved = JSON.parse(localStorage.getItem(SETTINGS_KEY) || 'null');
-      if (saved && typeof saved.brandSpec === 'string' && typeof saved.checklist === 'string') settings = saved;
-    } catch (_) { /* 無法讀取時保留本次頁面的設定 */ }
+    const AI_SETTING_FIELDS = { model: 'or-model', customModel: 'custom-model', thinking: 'thinking', geminiKey: 'gemini-key', geminiModel: 'gemini-model', providerMode: 'provider-mode' };
+    const DEFAULT_SETTINGS = { brandSpec: '', checklist: '', apiKey: '', model: OPENROUTER_MODEL, customModel: '', thinking: 'low', geminiKey: '', geminiModel: 'gemini-3.8-flash', providerMode: 'auto' };
+    function normalizeSettings(saved) {
+      const result = { ...DEFAULT_SETTINGS };
+      if (!saved || typeof saved !== 'object') return result;
+      Object.keys(result).forEach(key => { if (typeof saved[key] === 'string') result[key] = saved[key]; });
+      if (!['auto', 'gemini', 'openrouter'].includes(result.providerMode)) result.providerMode = 'auto';
+      if (!['low', 'medium', 'high'].includes(result.thinking)) result.thinking = 'low';
+      for (const key of ['model', 'geminiModel']) {
+        if (![...document.getElementById(AI_SETTING_FIELDS[key]).options].some(option => option.value === result[key])) result[key] = DEFAULT_SETTINGS[key];
+      }
+      return result;
+    }
+    let settings = { ...DEFAULT_SETTINGS };
+    try { settings = normalizeSettings(JSON.parse(localStorage.getItem(SETTINGS_KEY) || 'null')); }
+    catch (_) { /* 保留預設；舊版設定使用同一個儲存位置，不影響貼文。 */ }
 
     document.getElementById('open-settings').addEventListener('click', () => {
       brandSpecInput.value = settings.brandSpec;
       checklistInput.value = settings.checklist;
+      apiKeyInput.value = settings.apiKey;
+      Object.entries(AI_SETTING_FIELDS).forEach(([key, id]) => { document.getElementById(id).value = settings[key]; });
       document.getElementById('settings-status').textContent = '';
       settingsDialog.showModal();
     });
@@ -670,7 +800,9 @@
       button.addEventListener('click', () => document.getElementById(button.dataset.close).close());
     });
     document.getElementById('save-settings').addEventListener('click', () => {
-      settings = { brandSpec: brandSpecInput.value.trim(), checklist: checklistInput.value.trim() };
+      settings = { brandSpec: brandSpecInput.value.trim(), checklist: checklistInput.value.trim(), apiKey: apiKeyInput.value.trim() };
+      Object.entries(AI_SETTING_FIELDS).forEach(([key, id]) => { settings[key] = document.getElementById(id).value.trim(); });
+      settings = normalizeSettings(settings);
       const status = document.getElementById('settings-status');
       try {
         localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings));
@@ -687,7 +819,7 @@
       return `${year}/${String(month).padStart(2, '0')}/${String(day).padStart(2, '0')}（${weekday}）`;
     }
 
-    function assemblePrompt() {
+    function assembleMaterialCard() {
       const lines = FIELDS.map(field => {
         const value = document.getElementById(field.id).value.trim();
         if (field.id === 'topic') return `1. 這篇要說什麼／類型：${value}（${document.getElementById('post-type').value}）`;
@@ -696,12 +828,22 @@
         return `${number}. ${field.label}：${value || '未提供，請勿自行補全'}`;
       });
       return [
+        ...lines,
+        `呈現形式：${formatSelect.value}`,
+        `已選素材（依顯示順序）：${mediaItems.length ? mediaItems.map((item, index) => `${index + 1}. ${item.name}（${item.type}）`).join('；') : '無'}`,
+        '照片與影片檔案沒有附在這段文字指令中；請只根據素材卡中已描述的畫面寫文案，不要猜測檔案內容。',
+      ].join('\n');
+    }
+
+    function assemblePrompt() {
+      return [
         '（這段只要回覆文字，不要建立或修改任何檔案。）',
         '',
         `你是 ${BRAND.name} 的小編。請依下列品牌規格與素材卡，分別寫 ${PLATFORMS.join('、')} 的貼文，每個平台一篇。`,
         '現階段主要目標是驗證找球友需求並收集回饋，不要自行加入下載、報名或付費引導。',
         '',
         '寫作規則：',
+        '一律用台灣的繁體中文和台灣用語。不要出現簡體字，也不要用大陸用語（例如：視頻→影片、質量→品質、優化→改善、信息→訊息、網絡→網路、用戶→客人或使用者）。',
         '1. 素材卡沒有的事不要寫，不要自行補日期、功能、價格、活動、帳號、連結、成功案例或合作對象。',
         '2. 只能在某個平台說的資訊，只放在該平台；沒有指定時不要假設有平台限定優惠。',
         '3.「先不要講的」不能出現在任何一篇公開貼文中。',
@@ -716,28 +858,30 @@
         settings.brandSpec,
         '',
         '素材卡：',
-        ...lines,
-        `呈現形式：${formatSelect.value}`,
-        `已選素材（依顯示順序）：${mediaItems.length ? mediaItems.map((item, index) => `${index + 1}. ${item.name}（${item.type}）`).join('；') : '無'}`,
-        '照片與影片檔案沒有附在這段文字指令中；請只根據素材卡中已描述的畫面寫文案，不要猜測檔案內容。',
+        assembleMaterialCard(),
         ...(settings.checklist ? ['', '寫完照這張清單檢查；有 ❌ 先自己改好。若項目不適用，請標示不適用，不要虛構資訊。', settings.checklist] : [])
       ].join('\n');
     }
 
-    document.getElementById('build-prompt').addEventListener('click', () => {
+    function validatePrompt() {
       promptError.textContent = '';
       if (!settings.brandSpec) {
         promptError.textContent = '請先到右上角「設定」貼上品牌規格並儲存。';
         document.getElementById('open-settings').focus();
-        return;
+        return false;
       }
       for (const id of ['topic', 'exclude', 'unknown']) {
         if (!document.getElementById(id).value.trim()) {
           promptError.textContent = id === 'topic' ? '請先寫這篇的主題。' : '請填「先不要講的」與「還不確定的」；沒有就填「無」。';
           document.getElementById(id).focus();
-          return;
+          return false;
         }
       }
+      return true;
+    }
+
+    document.getElementById('build-prompt').addEventListener('click', () => {
+      if (!validatePrompt()) return;
       promptOutput.value = assemblePrompt();
       document.getElementById('copy-status').textContent = '';
       promptDialog.showModal();
@@ -777,6 +921,483 @@
       if (platforms.some(platform => !sections[platform])) return { error: '有平台標題沒有內容，請先檢查。' };
       return { sections, platforms };
     }
+    const AI_USAGE_KEY = 'courtmate-day7-ai-usage-v1';
+    let usageStorageFailed = false;
+    function usageDay() {
+      const now = new Date();
+      return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+    }
+    function emptyUsage() {
+      return { day: usageDay(), openrouter: { calls: 0, cost: 0, unknownCosts: 0 }, gemini: { calls: 0 } };
+    }
+    let memoryUsage = emptyUsage();
+    function readAIUsage() {
+      if (usageStorageFailed) {
+        if (memoryUsage.day !== usageDay()) memoryUsage = emptyUsage();
+        return memoryUsage;
+      }
+      try {
+        const saved = JSON.parse(localStorage.getItem(AI_USAGE_KEY) || 'null');
+        if (saved && saved.day === usageDay() && saved.openrouter && saved.gemini) {
+          memoryUsage = { day: saved.day, openrouter: { calls: Math.max(0, Number(saved.openrouter.calls) || 0), cost: Math.max(0, Number(saved.openrouter.cost) || 0), unknownCosts: Math.max(0, Number(saved.openrouter.unknownCosts) || 0) }, gemini: { calls: Math.max(0, Number(saved.gemini.calls) || 0) } };
+        } else if (memoryUsage.day !== usageDay() || saved) memoryUsage = emptyUsage();
+      } catch (_) { if (memoryUsage.day !== usageDay()) memoryUsage = emptyUsage(); }
+      return memoryUsage;
+    }
+    function saveAIUsage(usage) {
+      memoryUsage = usage;
+      try { localStorage.setItem(AI_USAGE_KEY, JSON.stringify(usage)); }
+      catch (_) { usageStorageFailed = true; }
+    }
+    function money(value) { return Number(value.toFixed(6)).toString(); }
+    function renderAIUsage(last) {
+      const usage = readAIUsage();
+      const current = last ? `這次用 ${last.provider}：${last.tokens === null ? 'tokens 未回報' : `${last.tokens} tokens`} ${last.cost === null ? '費用未回報' : `約 $${money(last.cost)}`}｜` : '';
+      document.getElementById('ai-usage').textContent = `${current}今天 OpenRouter ${usage.openrouter.calls} 次 $${money(usage.openrouter.cost)}${usage.openrouter.unknownCosts ? `（另有 ${usage.openrouter.unknownCosts} 次費用未回報）` : ''}、Gemini ${usage.gemini.calls} 次${usageStorageFailed ? '｜此瀏覽器無法保存用量，重新開啟後可能遺失。' : ''}`;
+    }
+    function providerError(provider, code, detail) {
+      if (provider === 'OpenRouter') return ({ 401: '金鑰不對', 402: '全班的額度用完了', 404: '模型名稱打錯了', 429: '太多人同時在用' })[code] || 'AI 暫時無法回覆，請稍後再試';
+      if (code === 400 && /api[\s_-]*key/i.test(detail || '')) return '金鑰不對';
+      return ({ 401: '金鑰不對', 403: '沒有權限', 404: '模型名稱不對，或免費版不能用', 429: '免費額度用完了' })[code] || '要求格式不對或 AI 暫時無法回覆，請稍後再試';
+    }
+    async function callAIProvider(provider, messages, config) {
+      const isOpenRouter = provider === 'OpenRouter';
+      const apiKey = isOpenRouter ? config.apiKey : config.geminiKey;
+      if (!apiKey) throw new Error('還沒填金鑰');
+      const controller = new AbortController();
+      const timer = setTimeout(() => controller.abort(), 60000);
+      const usage = readAIUsage();
+      const usageStartDay = usage.day;
+      usage[isOpenRouter ? 'openrouter' : 'gemini'].calls++;
+      if (isOpenRouter) usage.openrouter.unknownCosts++;
+      saveAIUsage(usage);
+      const body = { model: isOpenRouter ? config.customModel || config.model || OPENROUTER_MODEL : config.geminiModel, messages };
+      if (isOpenRouter) Object.assign(body, { max_tokens: 4000, reasoning: { effort: config.thinking || 'low', exclude: true }, usage: { include: true } });
+      try {
+        const response = await fetch(isOpenRouter ? 'https://openrouter.ai/api/v1/chat/completions' : 'https://generativelanguage.googleapis.com/v1beta/openai/chat/completions', {
+          method: 'POST', headers: { Authorization: `Bearer ${apiKey}`, 'Content-Type': 'application/json' }, body: JSON.stringify(body), signal: controller.signal
+        });
+        let data;
+        try { data = await response.json(); }
+        catch (error) {
+          if (error.name === 'AbortError') throw error;
+          if (!response.ok) throw new Error(providerError(provider, response.status));
+          throw new Error('回覆格式不對，請稍後重試');
+        }
+        if (Array.isArray(data)) data = data[0];
+        const cost = typeof data?.usage?.cost === 'number' && Number.isFinite(data.usage.cost) && data.usage.cost >= 0 ? data.usage.cost : null;
+        const tokens = typeof data?.usage?.total_tokens === 'number' && Number.isFinite(data.usage.total_tokens) && data.usage.total_tokens >= 0 ? data.usage.total_tokens : null;
+        if (isOpenRouter && cost !== null) {
+          const latest = readAIUsage();
+          if (latest.day === usageStartDay) {
+            latest.openrouter.cost += cost;
+            latest.openrouter.unknownCosts = Math.max(0, latest.openrouter.unknownCosts - 1);
+            saveAIUsage(latest);
+          }
+        }
+        if (!response.ok || data?.error) throw new Error(providerError(provider, data?.error?.code || response.status, data?.error?.message));
+        const content = typeof data?.choices?.[0]?.message?.content === 'string' ? data.choices[0].message.content.replace(/<think>[\s\S]*?(?:<\/think>|$)/gi, '').trim() : '';
+        const truncated = data?.choices?.[0]?.finish_reason === 'length';
+        if (!content) throw new Error(truncated ? '想太久，字數用完了（⚙ 設定把思考調成少想一點）' : 'AI 沒有傳回文字，請重試或改用 🧩 組好指令');
+        return { content, provider, tokens, cost, warning: truncated ? '回覆可能被切掉了' : '' };
+      } catch (error) {
+        if (error.name === 'AbortError') throw new Error('等太久');
+        if (error instanceof TypeError) throw new Error('連不到（檢查網路）');
+        throw error;
+      } finally { clearTimeout(timer); }
+    }
+    // 寫文、小幫手及檢查官共用此入口，各自提供 messages 即可。
+    async function askAI(messages) {
+      const config = { ...settings };
+      if (!config.apiKey && !config.geminiKey) throw new Error('還沒填金鑰。按 ⚙ 設定。');
+      const providers = config.providerMode === 'gemini' ? ['Gemini'] : config.providerMode === 'openrouter' ? ['OpenRouter'] : config.apiKey ? ['OpenRouter', ...(config.geminiKey ? ['Gemini'] : [])] : ['Gemini'];
+      const errors = [];
+      try {
+        for (const provider of providers) {
+          try {
+            const result = await callAIProvider(provider, messages, config);
+            if (errors.length) result.warning = [`⚠️ ${errors.join('；')}。這次改用 ${provider}。`, result.warning].filter(Boolean).join('\n');
+            renderAIUsage(result);
+            return result;
+          } catch (error) { errors.push(`${provider}：${error.message}`); }
+        }
+        throw new Error(errors.join('\n') + (providers.includes('OpenRouter') && !config.geminiKey ? '\n沒有備胎' : ''));
+      } catch (error) { renderAIUsage(); throw error; }
+    }
+
+    async function generateWithAI() {
+      const button = document.getElementById('generate-ai');
+      const status = document.getElementById('ai-status');
+      const questions = document.getElementById('ai-questions');
+      const raw = document.getElementById('ai-raw');
+      if (button.disabled) return;
+      status.textContent = '';
+      status.classList.toggle('ai-error', false);
+      questions.hidden = true;
+      raw.hidden = true;
+      raw.value = '';
+      if (!settings.apiKey && !settings.geminiKey) {
+        status.textContent = '還沒填金鑰。按 ⚙ 設定。';
+        status.classList.toggle('ai-error', true);
+        return;
+      }
+      if (!validatePrompt()) return;
+      const contextVersion = postContextVersion;
+      const originalDraft = JSON.stringify(capturePost());
+      setAIWorking(true);
+      button.textContent = '✨ AI 寫作中…';
+      status.textContent = 'AI 寫作中…';
+      try {
+        const response = await askAI([{ role: 'user', content: assemblePrompt() }]);
+        if (postContextVersion !== contextVersion) return;
+        raw.value = response.content;
+        const result = parsePlatformReply(response.content);
+        if (result.error || JSON.stringify(capturePost()) !== originalDraft) {
+          raw.hidden = false;
+          status.classList.toggle('ai-error', true);
+          status.textContent = [response.warning, result.error || '等待時內容已變更，沒有覆蓋。', '可複製下方原文，再用 📥 貼回 AI 寫好的。'].filter(Boolean).join('\n');
+          return;
+        }
+        savePreviousVersion();
+        posts[currentPlatform] = editor.value;
+        result.platforms.forEach(platform => { posts[platform] = result.sections[platform]; });
+        showPlatform(currentPlatform);
+        autoSaveDraft();
+        questions.textContent = result.sections['要問我的'] ? `要問我的：\n${result.sections['要問我的']}` : '';
+        questions.hidden = !result.sections['要問我的'];
+        status.textContent = [response.warning, `已分到 ${result.platforms.join('、')}，請確認內容與手機預覽。`].filter(Boolean).join('\n');
+      } catch (error) {
+        status.classList.toggle('ai-error', true);
+        status.textContent = error.message || 'AI 暫時無法回覆，請稍後再試。';
+      } finally {
+        setAIWorking(false);
+        button.textContent = '✨ 讓 AI 寫';
+      }
+    }
+    document.getElementById('generate-ai').addEventListener('click', generateWithAI);
+    renderAIUsage();
+
+    // AI 小幫手與上一版
+    function normalizeAssistantHistories(saved) {
+      return Object.fromEntries(PLATFORMS.map(platform => [platform, Array.isArray(saved?.[platform]) ? saved[platform].filter(item => item && ['user', 'assistant'].includes(item.role) && typeof item.content === 'string').slice(-8).map(item => ({ role: item.role, content: item.content })) : []]));
+    }
+    function copyPlatformPosts(source) {
+      return Object.fromEntries(PLATFORMS.map(platform => [platform, typeof source?.[platform] === 'string' ? source[platform] : '']));
+    }
+    function currentPostTexts() {
+      return { ...copyPlatformPosts(posts), [currentPlatform]: editor.value };
+    }
+    function savePreviousVersion() {
+      previousPosts = currentPostTexts();
+      document.getElementById('undo-ai').disabled = aiBusy;
+    }
+    function restorePreviousVersion() {
+      if (aiBusy || !previousPosts) return;
+      const current = currentPostTexts();
+      Object.assign(posts, copyPlatformPosts(previousPosts));
+      previousPosts = current;
+      showPlatform(currentPlatform);
+      autoSaveDraft();
+      document.getElementById('assistant-status').textContent = '已復原上一版；再按一次可切回。';
+      document.getElementById('assistant-status').classList.toggle('ai-error', false);
+    }
+    function renderAssistant() {
+      const history = document.getElementById('assistant-history');
+      history.replaceChildren();
+      const messages = assistantHistories[currentPlatform] || [];
+      if (!messages.length) history.append(node('p', 'helper', `目前 ${currentPlatform} 還沒有對話。`));
+      messages.forEach(message => {
+        const bubble = node('div', `assistant-message ${message.role === 'user' ? 'assistant-user' : ''}`);
+        bubble.append(node('strong', '', message.role === 'user' ? '我說的' : '小幫手'), node('p', '', message.content));
+        history.append(bubble);
+      });
+      document.getElementById('undo-ai').disabled = aiBusy || !previousPosts;
+    }
+    function setAIWorking(busy) {
+      aiBusy = busy;
+      document.getElementById('generate-ai').disabled = busy;
+      document.getElementById('assistant-send').disabled = busy;
+      document.getElementById('check-ai').disabled = busy;
+      updateReportFixButton();
+      document.getElementById('assistant-send').textContent = busy ? '修改中…' : '送出';
+      document.querySelectorAll('[data-assistant-request]').forEach(button => { button.disabled = busy; });
+      document.getElementById('undo-ai').disabled = busy || !previousPosts;
+    }
+    async function sendAssistant(instruction) {
+      if (aiBusy) return;
+      const status = document.getElementById('assistant-status');
+      const input = document.getElementById('assistant-input');
+      const raw = document.getElementById('assistant-result');
+      status.textContent = '';
+      status.classList.toggle('ai-error', false);
+      raw.hidden = true;
+      raw.value = '';
+      if (!editor.value.trim()) { status.textContent = '先讓 AI 寫一篇'; return; }
+      const request = (typeof instruction === 'string' ? instruction : input.value).trim();
+      if (!request) { status.textContent = '請輸入想怎麼改，或按上方快捷按鈕。'; input.focus(); return; }
+      if (!settings.brandSpec) { status.textContent = '請先到 ⚙ 設定貼上品牌規格並儲存。'; return; }
+      const platform = currentPlatform;
+      const contextVersion = postContextVersion;
+      const originalDraft = JSON.stringify(capturePost());
+      const system = `你是 ${BRAND.name} 的小編助理。使用者會叫你修改一篇【${platform}】貼文。只改使用者要求的地方，其他保持原樣；不能加素材卡上沒有的事實；遵守品牌規格；一律用台灣的繁體中文和台灣用語。不要出現簡體字，也不要用大陸用語（例如：視頻→影片、質量→品質、優化→改善、信息→訊息、網絡→網路、用戶→客人或使用者）。只回覆改好以後的整篇貼文，不要解釋、不要加標題。\n\n品牌規格全文：\n${settings.brandSpec}\n\n素材卡全文：\n${assembleMaterialCard()}`;
+      const messages = [{ role: 'system', content: system }, ...(assistantHistories[platform] || []).slice(-8).map(item => ({ role: item.role, content: item.content })), { role: 'user', content: `目前的【${platform}】貼文：${editor.value}。請這樣改：${request}` }];
+      setAIWorking(true);
+      status.textContent = '小幫手修改中…';
+      try {
+        const response = await askAI(messages);
+        if (postContextVersion !== contextVersion) return;
+        if (JSON.stringify(capturePost()) !== originalDraft) {
+          raw.value = response.content;
+          raw.hidden = false;
+          status.textContent = [response.warning, `等待時內容或平台已變更，沒有覆蓋。下方保留 ${platform} 的修改結果，可手動複製。`].filter(Boolean).join('\n');
+          return;
+        }
+        savePreviousVersion();
+        posts[platform] = response.content;
+        assistantHistories[platform] = [...(assistantHistories[platform] || []), { role: 'user', content: request }, { role: 'assistant', content: response.content }].slice(-8);
+        showPlatform(platform);
+        autoSaveDraft();
+        if (input.value.trim() === request) input.value = '';
+        status.textContent = [response.warning, `已修改 ${platform}；請確認有沒有加入素材卡沒有的事實。不滿意可按「↩ 復原上一版」。`].filter(Boolean).join('\n');
+      } catch (error) {
+        if (postContextVersion === contextVersion) {
+          status.textContent = error.message || '小幫手暫時無法回覆，請稍後重試。';
+          status.classList.toggle('ai-error', true);
+        }
+      } finally { setAIWorking(false); }
+    }
+    // 綁定 AI 小幫手
+    document.getElementById('assistant-send').addEventListener('click', () => sendAssistant());
+    document.getElementById('assistant-input').addEventListener('keydown', event => {
+      if (event.key === 'Enter' && !event.isComposing) { event.preventDefault(); sendAssistant(); }
+    });
+    document.querySelectorAll('[data-assistant-request]').forEach(button => button.addEventListener('click', () => {
+      document.getElementById('assistant-input').value = button.dataset.assistantRequest;
+      sendAssistant(button.dataset.assistantRequest);
+    }));
+    document.getElementById('undo-ai').addEventListener('click', restorePreviousVersion);
+
+    // 檢查官：獨立對話，只產生報告，不修改貼文。
+    function checkerFingerprint() {
+      return JSON.stringify({ texts: currentPostTexts(), card: assembleMaterialCard(), brandSpec: settings.brandSpec, checklist: settings.checklist });
+    }
+    function renderCheckReport(report) {
+      const host = document.getElementById('check-report');
+      host.replaceChildren();
+      let failCount = 0, warnCount = 0, inSummary = false;
+      report.split(/\r?\n/).forEach(line => {
+        if (/^\s*【總結】/.test(line)) inSummary = true;
+        if (!inSummary) { if (line.includes('❌')) failCount++; else if (line.includes('⚠️')) warnCount++; }
+        const heading = /^\s*【[^】]+】\s*$/.test(line);
+        const style = line.includes('❌') ? ' check-fail' : line.includes('⚠️') ? ' check-warn' : '';
+        const platform = heading && PLATFORMS.find(item => line.trim().toLowerCase() === `【${item}】`.toLowerCase());
+        const row = node(platform ? 'button' : heading ? 'h3' : 'p', 'check-line' + style + (platform ? ' review-platform' : ''), platform ? `${platform} · 查看原文` : line || ' ');
+        if (platform) { row.type = 'button'; row.addEventListener('click', () => focusReviewSource(platform)); }
+        host.append(row);
+      });
+      document.getElementById('check-summary').textContent = failCount || warnCount ? `${failCount} 項需要修改 · ${warnCount} 項需要你確認` : '沒有標示需修改或待確認的項目，請自行核對後存檔。';
+    }
+    async function checkWithAI() {
+      if (aiBusy) return;
+      const status = document.getElementById('check-status');
+      const button = document.getElementById('check-ai');
+      status.textContent = '';
+      status.classList.toggle('ai-error', false);
+      lastCheckReport = null;
+      document.getElementById('fix-suggestions').replaceChildren();
+      updateReportFixButton();
+      document.getElementById('fix-status').textContent = '';
+      document.getElementById('fix-raw').hidden = true;
+      const texts = currentPostTexts();
+      if (!PLATFORMS.some(platform => typeof texts[platform] === 'string' && texts[platform].trim())) {
+        status.textContent = '還沒有貼文可以檢查';
+        return;
+      }
+      if (!settings.brandSpec) { status.textContent = '請先到 ⚙ 設定貼上品牌規格並儲存。'; return; }
+      const checklist = settings.checklist?.trim() || '1. 日期價格對不對\n2. 有沒有多加的事\n3. 只能在某平台講的有沒有跑掉\n4. 先不要講的有沒有出現\n5. 有沒有不能用的字\n6. 有沒有簡體字或大陸用語';
+      const messages = [
+        { role: 'system', content: `你是 ${BRAND.name} 的審核官，專門挑毛病，不負責誇獎。把每一篇貼文照檢查清單一條一條對。✅ 符合；❌ 不符合時，必須指出原句、問題與能直接替換的修改文字，不能只說「請改善」「確認一下」；⚠️ 要靠人判斷的，寫出需確認的資訊及確認前的安全寫法。回覆格式：【平台名稱】換行，符合項目每條一行「編號 ✅ 原因」；不符合項目每條一行「編號 ❌ 原句：「有問題的原文」｜問題：原因｜建議改成：「可直接替換的新句子」」。應刪除的句子明確寫「建議刪除：「原句」」。⚠️ 每條一行「編號 ⚠️ 待確認：什麼資訊｜確認前建議：「不宣稱未知事實的替代句」」。所有 ❌ 必須放在對應平台標題之下，不可只寫在總結。最後【總結】列出修改順序與要人工確認的事。若沒有 ❌，寫明「沒有必須修改的項目」，不要為了湊修改方案製造問題。不管清單有沒有寫，都另外檢查有沒有簡體字或大陸用語。報告也用台灣繁體中文寫。沒有貼文的平台標示「無貼文，不適用」，不要給它通過。素材與規格沒有的事實不可視為已確認，只提供檢查報告，不改寫貼文。` },
+        { role: 'user', content: ['品牌規格全文：', settings.brandSpec, '', '素材卡全文：', assembleMaterialCard(), '', '檢查清單：', checklist, '', '各平台貼文：', ...PLATFORMS.map(platform => `【${platform}】\n${texts[platform]?.trim() ? texts[platform] : '（無貼文）'}`)].join('\n') }
+      ];
+      const fingerprint = checkerFingerprint();
+      const contextVersion = postContextVersion;
+      setAIWorking(true);
+      button.textContent = '🔍 檢查中…';
+      status.textContent = '檢查官正在逐項檢查…';
+      try {
+        const response = await askAI(messages);
+        if (postContextVersion !== contextVersion) { status.textContent = '已切換貼文，這次報告未開啟。請重新檢查目前這篇。'; return; }
+        renderCheckReport(response.content);
+        const changed = checkerFingerprint() !== fingerprint;
+        lastCheckReport = { content: response.content, fingerprint, contextVersion, texts: { ...texts }, targets: reportFixTargets(response.content, texts), applied: false };
+        document.getElementById('check-notice').textContent = [response.warning, changed ? '等待時內容或規則已變更。這份報告依送出時的內容產生，請重新檢查。' : '這是 AI 檢查意見；標示需人工確認的項目，請自行核對。'].filter(Boolean).join('\n');
+        openReview();
+        status.textContent = '檢查完成，貼文內容維持原樣。';
+      } catch (error) {
+        status.textContent = error.message || '檢查官暫時無法回覆，請稍後重試。';
+        status.classList.toggle('ai-error', true);
+      } finally {
+        setAIWorking(false);
+        button.textContent = '🔍 檢查官';
+        updateReportFixButton();
+      }
+    }
+    function reportFixTargets(report, texts) {
+      const matches = [...report.matchAll(/^\s*【([^】]+)】\s*$/gm)];
+      return [...new Set(matches.flatMap((match, index) => {
+        const platform = PLATFORMS.find(item => item.toLowerCase() === match[1].toLowerCase());
+        const section = report.slice(match.index + match[0].length, matches[index + 1]?.index ?? report.length);
+        return platform && texts[platform]?.trim() && section.includes('❌') ? [platform] : [];
+      }))];
+    }
+    function openReview(showReview = true) {
+      document.getElementById('review-view').hidden = !showReview;
+      document.getElementById('phone-view').hidden = showReview;
+      document.getElementById('review-tab').setAttribute('aria-selected', String(showReview));
+      document.getElementById('preview-tab').setAttribute('aria-selected', String(!showReview));
+    }
+    function resetReview() {
+      lastCheckReport = null;
+      document.getElementById('check-report').replaceChildren();
+      document.getElementById('fix-suggestions').replaceChildren();
+      document.getElementById('check-summary').textContent = '寫好貼文後，按「檢查官」找出需要修改與確認的地方。';
+      document.getElementById('check-notice').textContent = '';
+      document.getElementById('fix-status').textContent = '';
+      document.getElementById('fix-raw').hidden = true;
+      updateReportFixButton();
+    }
+    function reviewMatchesCurrent(report) {
+      return report && report.contextVersion === postContextVersion && report.fingerprint === checkerFingerprint();
+    }
+    function updateReportFixButton() {
+      const report = lastCheckReport;
+      const valid = reviewMatchesCurrent(report);
+      document.getElementById('fix-report').disabled = aiBusy || !valid || !report.targets.length || Boolean(report.suggestions);
+      const items = report?.suggestions?.items || [];
+      document.getElementById('apply-all-fixes').disabled = aiBusy || !valid || !items.some(item => !item.applied);
+      document.getElementById('check-again').disabled = aiBusy;
+    }
+    function refreshReviewState() {
+      updateReportFixButton();
+      if (lastCheckReport && !reviewMatchesCurrent(lastCheckReport)) {
+        document.getElementById('check-summary').textContent = '內容或規則已變更，請重新檢查。';
+        renderFixSuggestions();
+      }
+    }
+    function parseFixSuggestions(raw, report) {
+      let parsed;
+      try { parsed = JSON.parse(raw.trim().replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/, '')); }
+      catch (_) { throw new Error('修改建議格式不完整，沒有改動貼文。'); }
+      if (!parsed || !Array.isArray(parsed.edits) || parsed.edits.length > 30) throw new Error('修改建議格式不完整，沒有改動貼文。');
+      const items = parsed.edits.map((edit, index) => {
+        if (!edit || !report.targets.includes(edit.platform)) throw new Error('建議包含未指定的平台，沒有改動貼文。');
+        if (typeof edit.before !== 'string' || !edit.before || typeof edit.after !== 'string' || edit.before === edit.after) throw new Error('修改建議缺少原句或沒有差異，沒有改動貼文。');
+        const source = report.texts[edit.platform];
+        const start = source.indexOf(edit.before);
+        if (start < 0 || source.indexOf(edit.before, start + 1) >= 0) throw new Error('原句無法唯一對應到貼文，沒有改動貼文。');
+        return { id: `change-${index + 1}`, platform: edit.platform, before: edit.before, after: edit.after, reason: typeof edit.reason === 'string' ? edit.reason : '依檢查報告調整', start, end: start + edit.before.length, applied: false };
+      });
+      items.forEach((item, index) => {
+        if (items.slice(index + 1).some(other => other.platform === item.platform && item.start < other.end && other.start < item.end)) throw new Error('修改建議有重疊，請重新產生建議。');
+      });
+      return { items, questions: Array.isArray(parsed.questions) ? parsed.questions.filter(item => typeof item === 'string' && item.trim()) : [] };
+    }
+    function focusReviewSource(platform, before = '') {
+      switchPlatform(platform);
+      editor.focus();
+      if (before) {
+        const start = editor.value.indexOf(before);
+        if (start >= 0) editor.setSelectionRange(start, start + before.length);
+      }
+    }
+    function renderFixSuggestions() {
+      const host = document.getElementById('fix-suggestions');
+      host.replaceChildren();
+      const suggestions = lastCheckReport?.suggestions;
+      if (!suggestions) return;
+      suggestions.items.forEach(item => {
+        const valid = reviewMatchesCurrent(lastCheckReport);
+        const card = node('section', 'change-card');
+        const head = node('div', 'change-heading');
+        head.append(node('strong', '', item.platform), node('span', 'change-state', !valid ? '需重新檢查' : item.applied ? '已採用' : '待你決定'));
+        card.append(head, node('p', 'change-reason', item.reason));
+        const before = node('div', 'change-before');
+        before.append(node('strong', 'change-label', '修改前'), node('p', '', item.before));
+        const after = node('div', 'change-after');
+        after.append(node('strong', 'change-label', '建議改成'), node('p', '', item.after || '刪除這段文字'));
+        const actions = node('div', 'dialog-actions');
+        const locate = node('button', 'secondary-action', '查看原文'); locate.type = 'button';
+        locate.addEventListener('click', () => focusReviewSource(item.platform, item.applied ? item.after : item.before));
+        const apply = node('button', 'primary-action', !valid ? '請重新檢查' : item.applied ? '已採用' : '採用這項'); apply.type = 'button';
+        apply.disabled = aiBusy || item.applied || !reviewMatchesCurrent(lastCheckReport);
+        apply.addEventListener('click', () => applyReportFixes(item.id));
+        actions.append(locate, apply); card.append(before, after, actions); host.append(card);
+      });
+      if (suggestions.questions.length) {
+        const questions = node('section', 'check-warn change-card');
+        questions.append(node('strong', '', '需要你確認，AI 不會自行補寫'));
+        suggestions.questions.forEach(question => questions.append(node('p', '', question)));
+        host.append(questions);
+      }
+    }
+    async function fixFromReport() {
+      if (aiBusy) return;
+      const status = document.getElementById('fix-status');
+      const raw = document.getElementById('fix-raw');
+      const button = document.getElementById('fix-report');
+      status.textContent = ''; status.classList.toggle('ai-error', false); raw.hidden = true; raw.value = '';
+      const report = lastCheckReport;
+      if (!reviewMatchesCurrent(report)) { status.textContent = '內容或規則已變更，請重新檢查，再產生建議。'; updateReportFixButton(); return; }
+      if (report.suggestions) { status.textContent = '修改前後對照已在下方，採用後再重新檢查。'; return; }
+      if (!report.targets.length) { status.textContent = '沒有可直接修改的 ❌。⚠️ 的資訊請先補充到素材卡，再重新檢查。'; return; }
+      const messages = [
+        { role: 'system', content: `你是 ${BRAND.name} 的貼文編輯。依審核報告的 ❌ 產生逐項替換建議，暫時不套用。只處理指定平台，其他文字保持原樣；⚠️ 的未知事實不能猜測。品牌規格與素材卡優先於報告，來源沒有的日期、價格、功能、活動、連結不能補寫；應刪除未證實的說法或改成不宣稱該事實的文字，將待確認的問題放進 questions。遵守先不要講的與平台限制；一律用台灣繁體中文與台灣用語。只回覆 JSON：{"edits":[{"platform":"FB","before":"貼文內可唯一找到的完整原句","after":"可直接替換的建議句","reason":"修改原因"}],"questions":["待確認事項"]}。before 必須逐字出現在原文且只出現一次，必要時加上前後文。每項盡量只處理一個問題；不同 edits 不得重疊。刪除時 after 為空字串。無法確定怎麼改時，不要編造修改，edits 可為空陣列，改列 questions。不要輸出 Markdown 或整篇改稿。` },
+        { role: 'user', content: ['指定修改平台：' + report.targets.join('、'), '', '品牌規格全文：', settings.brandSpec, '', '素材卡全文：', assembleMaterialCard(), '', '檢查清單：', settings.checklist || '以報告內的檢查項目為準', '', '各平台原文：', ...PLATFORMS.map(platform => `【${platform}】\n${report.texts[platform] || '（無貼文）'}`), '', '審核報告（只處理 ❌）：', report.content].join('\n') }
+      ];
+      setAIWorking(true); button.textContent = '正在產生修改建議…'; status.textContent = '正在整理原句與建議句，貼文尚未修改。';
+      try {
+        const response = await askAI(messages);
+        if (lastCheckReport !== report || !reviewMatchesCurrent(report)) { status.textContent = '等待時內容已變更，沒有改動貼文。請重新檢查。'; raw.value = response.content; raw.hidden = false; return; }
+        try { report.suggestions = parseFixSuggestions(response.content, report); }
+        catch (error) { status.textContent = error.message + ' 下方保留回覆供核對。'; raw.value = response.content; raw.hidden = false; return; }
+        document.getElementById('report-details').open = false;
+        renderFixSuggestions();
+        status.textContent = [response.warning, report.suggestions.items.length ? `有 ${report.suggestions.items.length} 項建議。先看修改前後，再逐項採用或全部採用；目前尚未改文。` : '目前無法直接改寫，請先補充下方待確認事項，再重新檢查。', ...report.suggestions.questions].filter(Boolean).join('\n');
+      } catch (error) { status.textContent = error.message || '建議產生失敗，原文仍保留。'; status.classList.toggle('ai-error', true); }
+      finally { setAIWorking(false); renderFixSuggestions(); button.textContent = '產生修改建議'; updateReportFixButton(); }
+    }
+    function applyReportFixes(id) {
+      if (aiBusy) return;
+      const status = document.getElementById('fix-status');
+      const report = lastCheckReport;
+      if (!reviewMatchesCurrent(report)) { status.textContent = '內容或規則已變更，沒有套用。請重新檢查。'; refreshReviewState(); return; }
+      const pending = (report.suggestions?.items || []).filter(item => !item.applied && (!id || item.id === id));
+      if (!pending.length) return;
+      savePreviousVersion();
+      Object.assign(posts, currentPostTexts());
+      pending.forEach(item => { item.applied = true; });
+      [...new Set(pending.map(item => item.platform))].forEach(platform => {
+        let text = report.texts[platform];
+        report.suggestions.items.filter(item => item.platform === platform && item.applied).sort((a, b) => b.start - a.start).forEach(item => { text = text.slice(0, item.start) + item.after + text.slice(item.end); });
+        posts[platform] = text;
+      });
+      showPlatform(currentPlatform); autoSaveDraft();
+      report.fingerprint = checkerFingerprint();
+      document.getElementById('check-status').textContent = '貼文已更新，請重新檢查。';
+      const remaining = report.suggestions.items.filter(item => !item.applied).length;
+      document.getElementById('check-notice').textContent = '以下報告依修改前的內容產生。採用建議後，請重新檢查。';
+      document.getElementById('check-summary').textContent = remaining ? `已採用 ${report.suggestions.items.length - remaining} 項，還有 ${remaining} 項建議待決定。` : '建議已採用，請重新檢查更新後的貼文。';
+      status.textContent = `已採用 ${pending.length} 項。${remaining ? '可以繼續採用其餘建議。' : ''}請重新檢查；不滿意可用「↩ 復原上一版」。`;
+      renderFixSuggestions(); updateReportFixButton();
+    }
+    // 綁定檢查官
+    document.getElementById('check-ai').addEventListener('click', checkWithAI);
+    document.getElementById('fix-report').addEventListener('click', fixFromReport);
+    document.getElementById('apply-all-fixes').addEventListener('click', () => applyReportFixes());
+    document.getElementById('check-again').addEventListener('click', checkWithAI);
+    document.getElementById('review-tab').addEventListener('click', () => openReview());
+    document.getElementById('preview-tab').addEventListener('click', () => openReview(false));
+
     document.getElementById('apply-import').addEventListener('click', () => {
       const result = parsePlatformReply(document.getElementById('import-text').value);
       const status = document.getElementById('import-status');
@@ -828,7 +1449,9 @@
         media: mediaItems.map(({ id, name, type, size }) => ({ id, name, type, size })),
         status: savedPosts.find(item => item.id === currentSavedId)?.status || '草稿',
         posts: Object.fromEntries(PLATFORMS.map(platform => [platform, posts[platform]])),
-        platform: currentPlatform
+        platform: currentPlatform,
+        assistantHistories: normalizeAssistantHistories(assistantHistories),
+        previousPosts: previousPosts ? copyPlatformPosts(previousPosts) : null
       };
     }
 
@@ -843,9 +1466,19 @@
       });
       renderPreview();
       updateCharacterCount();
+      renderAssistant();
+      refreshReviewState();
     }
 
     function applyPost(item) {
+      postContextVersion++;
+      resetReview();
+      assistantHistories = normalizeAssistantHistories(item.assistantHistories);
+      previousPosts = item.previousPosts && typeof item.previousPosts === 'object' && !Array.isArray(item.previousPosts) ? copyPlatformPosts(item.previousPosts) : null;
+      document.getElementById('assistant-input').value = '';
+      document.getElementById('assistant-status').textContent = '';
+      document.getElementById('assistant-result').value = '';
+      document.getElementById('assistant-result').hidden = true;
       FIELDS.forEach(field => { document.getElementById(field.id).value = item.card?.[field.id] || ''; });
       document.getElementById('post-type').value = POST_TYPES.includes(item.type) ? item.type : POST_TYPES[0];
       PLATFORMS.forEach(platform => { posts[platform] = item.posts?.[platform] || ''; });
@@ -966,6 +1599,7 @@
       storageStatus.textContent = '已恢復上次自動暫存的內容。';
     }
     renderPreview();
+    renderAssistant();
   </script>
 </body>
 </html>
