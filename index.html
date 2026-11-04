@@ -71,6 +71,28 @@
     #ai-usage { overflow-wrap: anywhere; }
     #ai-raw[hidden] { display: none; }
     #generate-ai:disabled { opacity: .6; cursor: wait; }
+    #storage-status.storage-error { color: #a32020; font-weight: 700; }
+    #picture-input { display: none; }
+    .post-pictures { padding: 18px 22px 24px; border-top: 1px solid var(--line); }
+    .post-pictures h3 { margin: 0 0 12px; font-size: 17px; }
+    .picture-list { display: flex; flex-wrap: wrap; gap: 10px; margin: 14px 0; }
+    .picture-thumb { position: relative; width: 80px; height: 80px; margin-bottom: 28px; border: 3px solid transparent; border-radius: 9px; }
+    .picture-thumb.is-main { border-color: var(--main); }
+    .picture-select { display: block; padding: 0; width: 100%; height: 100%; border: 0; border-radius: 5px; overflow: hidden; cursor: pointer; background: var(--bg); }
+    .picture-select img { display: block; width: 100%; height: 100%; object-fit: cover; }
+    .picture-remove { position: absolute; right: -7px; top: -8px; width: 24px; height: 24px; padding: 0; border: 1px solid var(--line); border-radius: 50%; background: white; color: var(--ink); cursor: pointer; }
+    .picture-main-label { position: absolute; bottom: 0; left: 0; background: var(--main); color: white; padding: 2px 4px; font-size: 10px; pointer-events: none; }
+    #generate-image:disabled, #plan-image:disabled { opacity: .55; cursor: wait; }
+    #image-status.image-error { color: #a32020; }
+    #image-status, #image-usage, #image-plan-usage { white-space: pre-wrap; overflow-wrap: anywhere; }
+    .image-description { display: block; margin-top: 14px; font-size: 13px; font-weight: 700; }
+    #picture-status { white-space: pre-wrap; }
+    #picture-storage.picture-storage-error { color: #a32020; font-weight: 700; }
+    .post-picture-frame { position: relative; width: 100%; overflow: hidden; background: white; }
+    .post-picture-frame > img { display: block; position: absolute; inset: 0; }
+    .line-picture-row { margin-bottom: 8px; }
+    .line-picture-bubble { width: 230px; max-width: 100%; background: white; border-radius: 3px 13px 13px 13px; overflow: hidden; }
+    .threads-content > .post-picture-frame { margin-top: 9px; border-radius: 7px; }
     * { box-sizing: border-box; }
     html { font-family: "PingFang TC", "Noto Sans TC", "Microsoft JhengHei", sans-serif; color: var(--ink); background: var(--bg); }
     body { margin: 0; min-width: 320px; }
@@ -176,6 +198,7 @@
     .dialog-body textarea.prompt-output { min-height: 300px; font-size: 13px; line-height: 1.6; }
     .dialog-actions { display: flex; align-items: center; flex-wrap: wrap; gap: 10px; }
     .dialog-status { margin: 10px 0 0; color: var(--main); font-size: 12px; min-height: 18px; }
+    .storage-error { color: #a32020; font-weight: 700; }
     .post-list { display: grid; gap: 10px; }
     .post-item { display: flex; align-items: center; justify-content: space-between; gap: 14px; border: 1px solid var(--line); border-radius: 10px; padding: 13px; }
     .post-item strong { display: block; font-size: 14px; overflow-wrap: anywhere; }
@@ -209,7 +232,153 @@
     .slide-tools > * { pointer-events: auto; }
     .slide-count { border-radius: 50px; background: #193139dc; color: white; padding: 4px 8px; font-size: 10px; }
     @media (max-width: 1100px) { .workspace { grid-template-columns: minmax(280px, 1fr) minmax(280px, 1fr); } .panel.preview { grid-column: 1 / -1; } .phone { width: 300px; } }
+    @media (max-width: 999.98px) {
+      .workspace { grid-template-columns: minmax(0, 1fr); }
+      .workspace > .panel { width: 100%; min-width: 0; }
+      .panel.preview { grid-column: auto; }
+      .top-inner, .intro { flex-direction: column; align-items: start; }
+      .top-actions { min-width: 0; }
+      .status { white-space: normal; }
+      .phone { width: min(100%, 322px); }
+    }
     @media (max-width: 690px) { .top-inner, .intro { padding-left: 18px; padding-right: 18px; } .top-inner { align-items: start; flex-direction: column; gap: 10px; } h1 span { display: block; margin: 5px 0 0; } .intro { align-items: start; flex-direction: column; gap: 7px; } .workspace { padding: 0 12px 24px; grid-template-columns: 1fr; gap: 13px; } .panel.preview { grid-column: auto; } .panel-head { padding: 17px 17px 14px; } .fields, .editor-content { padding: 17px; } .post-editor { min-height: 250px; } }
+    /* CourtMate 暫用品牌視覺：溫暖、平等的球友感；正式品牌色仍待定。 */
+    :root {
+      --main: #285b48; --main-dark: #183e30; --court: #e8efe4;
+      --ball: #d9df89; --bg: #f5f3ec; --surface: #fffefa;
+      --ink: #24392e; --muted: #697166; --line: #e6e7dc;
+      --focus: #285b48; --shadow: 0 3px 18px rgba(35,58,40,.04);
+    }
+    html { font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "PingFang TC", "Microsoft JhengHei", sans-serif; -webkit-font-smoothing: antialiased; }
+    body { line-height: 1.5; }
+    button, input, select, textarea { -webkit-tap-highlight-color: transparent; }
+    button { transition: background-color .16s ease, box-shadow .16s ease, opacity .16s ease, transform .12s ease; }
+    button:active:not(:disabled) { transform: scale(.98); }
+    button:disabled { opacity: .45; cursor: default; }
+    button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-visible { outline: 2px solid var(--focus); outline-offset: 3px; }
+    .topbar { background: rgba(255,254,248,.94); color: var(--ink); border-bottom: 1px solid var(--line); -webkit-backdrop-filter: blur(20px); backdrop-filter: blur(20px); }
+    .top-inner { padding-top: 25px; padding-bottom: 23px; align-items: center; }
+    .eyebrow { color: var(--main); letter-spacing: .14em; font-size: 10px; font-weight: 600; margin-bottom: 7px; }
+    h1, h2, .step, .field-number { font-family: inherit; }
+    h1 { font-size: clamp(25px,2.1vw,32px); font-weight: 700; letter-spacing: -.04em; line-height: 1.2; }
+    h1 span { color: var(--muted); font-size: 14px; font-weight: 400; letter-spacing: 0; }
+    .status { color: var(--muted); font-size: 11px; }
+    .status strong { color: var(--main); font-weight: 600; }
+    .settings-trigger { border: 0; border-radius: 12px; background: #f0f2f1; color: var(--main-dark); min-height: 40px; padding: 10px 13px; font-weight: 500; }
+    .settings-trigger:hover { background: #e4ece7; }
+    .intro { padding-top: 24px; padding-bottom: 20px; }
+    .intro p { font-size: 13px; }
+    .step { font-weight: 500; letter-spacing: 0; font-size: 11px; }
+    .workspace { gap: 22px; padding-bottom: 56px; }
+    .panel { border: 0; border-radius: 22px; box-shadow: var(--shadow); }
+    .panel-head { padding: 24px 24px 20px; }
+    .panel-kicker { font-size: 11px; font-weight: 500; letter-spacing: .025em; color: var(--muted); }
+    .panel-kicker::before { background: var(--main); width: 5px; height: 5px; }
+    h2 { font-size: 23px; font-weight: 650; letter-spacing: -.035em; }
+    .panel-desc { font-size: 12px; line-height: 1.7; }
+    .fields, .editor-content { padding: 22px 24px 26px; }
+    .fields { gap: 22px; }
+    .field-label, .editor-label, .dialog-body label { font-size: 13px; font-weight: 600; margin-bottom: 9px; }
+    .field-number { color: #858990; font-size: 10px; font-weight: 400; font-variant-numeric: tabular-nums; }
+    .field-hint { font-size: 11px; }
+    input, select, textarea { background: #f3f3eb; border: 1px solid transparent; border-radius: 12px; font-size: 14px; padding: 12px 13px; min-height: 44px; transition: border-color .16s ease, background-color .16s ease; }
+    input::placeholder, textarea::placeholder { color: #777b83; }
+    input:focus, select:focus, textarea:focus { background: white; border-color: #a7c6b5; }
+    textarea { min-height: 88px; line-height: 1.7; }
+    .post-editor { min-height: 385px; background: #fbfaf5; font-size: 16px; line-height: 1.85; padding: 16px; }
+    .topic-type-label { font-weight: 500; color: var(--muted); }
+    .divider-label { border-top-style: solid; padding-top: 20px; }
+    .primary-action, .secondary-action { min-height: 44px; border-radius: 12px; font-size: 13px; font-weight: 600; padding: 11px 15px; }
+    .primary-action { background: var(--main); box-shadow: 0 2px 4px #174b3b12; }
+    .primary-action:hover { background: var(--main-dark); }
+    .secondary-action { border: 0; background: #eff3f0; color: var(--main-dark); }
+    .secondary-action:hover { background: #e3ece6; }
+    .danger-action { color: #b4232d; background: #fff0f0; }
+    .tabs, .review-tabs { background: #e9ece1; border: 0; border-radius: 12px; padding: 4px; gap: 3px; }
+    .tabs { flex-wrap: nowrap; }
+    .tab, .review-tabs button { flex: 1; min-width: 0; border: 0; border-radius: 9px; min-height: 36px; padding: 8px 6px; font-size: 12px; font-weight: 500; background: transparent; color: #5f6269; }
+    .tab.active, .review-tabs button[aria-selected="true"] { background: #fffefa; color: var(--main-dark); box-shadow: 0 1px 5px #24402d14; }
+    .review-tabs { margin: 14px 14px 0; }
+    .helper, .dialog-status, .form-message { font-size: 12px; line-height: 1.7; }
+    .helper { color: var(--muted); }
+    .count-row { flex-wrap: wrap; gap: 8px; padding: 4px 0 7px; }
+    .count-row input { min-height: 36px; }
+    .assistant-panel { margin-top: 24px; padding-top: 22px; }
+    .assistant-panel h3 { font-size: 17px; font-weight: 600; margin: 18px 0 12px; }
+    .assistant-message { background: #f2f1e8; border-radius: 15px 15px 15px 5px; padding: 12px 14px; }
+    .assistant-message.assistant-user { background: #eaf2ed; border-radius: 15px 15px 5px 15px; }
+    .assistant-shortcuts button { min-height: 36px; font-size: 12px; font-weight: 500; }
+    .assistant-compose { gap: 8px; }
+    .post-pictures { padding: 24px; }
+    .post-pictures h3 { font-size: 18px; font-weight: 600; }
+    .media-picker { border: 0; border-radius: 14px; background: #f3f3eb; padding: 14px; }
+    .media-picker select { background: white; }
+    .media-item { border: 0; border-radius: 13px; padding: 10px; background: #f3f3eb; }
+    .media-controls button { min-width: 32px; min-height: 32px; border: 0; border-radius: 8px; background: #eef2ef; }
+    .picture-thumb { margin-bottom: 34px; border-radius: 12px; }
+    .picture-select { border-radius: 8px; }
+    .picture-remove { width: 28px; height: 28px; box-shadow: 0 2px 7px #00000010; }
+    .preview-area { background: #fbfaf5; padding-top: 25px; }
+    .phone { border-color: #252628; box-shadow: 0 14px 30px #0000000f; }
+    .notch { background: #252628; }
+    dialog { border: 0; border-radius: 24px; box-shadow: 0 24px 100px #00000029; background: #f5f3ec; }
+    dialog::backdrop { background: #151c1a55; -webkit-backdrop-filter: blur(5px); backdrop-filter: blur(5px); }
+    .dialog-head { background: #fffef8eb; padding: 25px 26px 20px; }
+    .dialog-head h2 { font-size: 23px; }
+    .dialog-body { padding: 24px 26px 28px; }
+    .dialog-body > input, .dialog-body > textarea, .dialog-body > select { background: white; }
+    .icon-close { flex: 0 0 32px; height: 32px; width: 32px; display: grid; place-items: center; background: #e9ecdf; border-radius: 50%; font-size: 22px; color: #697166; }
+    .ai-settings-group { background: white; padding: 20px; border: 0; border-radius: 17px; margin: 24px 0; }
+    .ai-settings-group legend { font-size: 13px; padding: 0 5px; font-weight: 600; }
+    .ai-settings-group label:not(:first-of-type) { margin-top: 15px; }
+    .ai-settings-group textarea { background: #f3f3eb; }
+    .board-column { background: #eceee3; border-radius: 16px; padding: 12px; }
+    .board-column .post-item { border: 0; border-radius: 13px; padding: 13px; box-shadow: 0 1px 3px #00000005; }
+    .board-column select { background: #f3f3eb; }
+    .change-card { border-radius: 16px; padding: 16px; }
+    .review-summary { border-left: 0; border-radius: 13px; background: #eef3ed; font-weight: 500; }
+    .check-line { border-radius: 10px; }
+    @media (max-width: 999.98px) { .top-inner { gap: 17px; } .top-actions { gap: 8px; } }
+    @media (max-width: 690px) {
+      .top-inner { padding: 22px 20px; } .eyebrow { font-size: 9px; }
+      h1 span { margin-top: 6px; font-size: 14px; }
+      .status { width: 100%; } .settings-trigger { min-height: 44px; }
+      .intro { padding: 20px; gap: 8px; } .step { font-size: 11px; }
+      .workspace { padding: 0 12px 32px; gap: 18px; }
+      .panel { border-radius: 20px; } .panel-head { padding: 22px 20px 18px; }
+      .fields, .editor-content, .post-pictures { padding: 20px; }
+      input, select, textarea { font-size: 16px; }
+      .post-editor { min-height: 300px; } .tab, .review-tabs button { min-height: 40px; }
+      .assistant-shortcuts button { min-height: 44px; }
+      .media-controls button { min-width: 36px; min-height: 36px; }
+      .picture-thumb { margin-bottom: 40px; }
+      dialog { width: calc(100% - 20px); max-height: 90dvh; border-radius: 22px; }
+      .dialog-head, .dialog-body { padding: 20px; } .ai-settings-group { padding: 16px; }
+    }
+    @media (prefers-reduced-motion: reduce) { *, *::before, *::after { transition: none !important; animation: none !important; } }
+    .eyebrow { display: flex; align-items: center; gap: 8px; }
+    .eyebrow::before { content: ""; width: 16px; height: 16px; flex: 0 0 16px; border-radius: 50%; background: radial-gradient(circle at -10% 50%, transparent 7px, #fffefa 7.5px, #fffefa 8.5px, transparent 9px), radial-gradient(circle at 110% 50%, transparent 7px, #fffefa 7.5px, #fffefa 8.5px, transparent 9px), var(--ball); box-shadow: inset 0 0 0 1px #285b481a; }
+    h1 { color: var(--main-dark); }
+    .panel { border: 1px solid #e8e9de; }
+    .panel-kicker { color: var(--main); }
+    .panel-kicker::before { width: 6px; height: 6px; background: var(--ball); box-shadow: 0 0 0 1px #85934355; }
+    .step { background: #edf0d8; color: #42562d; padding: 6px 11px; border-radius: 20px; }
+    .dialog-body > input, .dialog-body > textarea, .dialog-body > select, .ai-settings-group { background: var(--surface); }
+    .picture-select, .board-column .post-item { background: var(--surface); }
+    .card-design { margin: 24px 0; border-top: 1px solid var(--line); padding-top: 20px; }
+    .card-design label { display: block; margin: 15px 0 7px; font-size: 13px; font-weight: 600; }
+    .card-controls { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 0 10px; }
+    .card-controls > div { min-width: 0; }
+    .card-design input[type="range"] { width: 100%; accent-color: var(--main); padding: 0; background: transparent; }
+    .card-design-preview { margin-top: 15px; border-radius: 12px; overflow: hidden; background: var(--court); }
+    .card-design-preview canvas { display: block; width: 100%; height: auto; }
+    .post-picture-frame > canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+    #card-design-status { white-space: pre-wrap; overflow-wrap: anywhere; }
+    @media (max-width: 690px) {
+      .picture-thumb { width: 96px; height: 96px; margin-bottom: 46px; }
+      .picture-thumb > .media-controls { gap: 2px; flex-wrap: nowrap; }
+      .picture-thumb .media-controls button { min-width: 44px; min-height: 44px; padding: 5px; }
+    }
   </style>
 </head>
 <body>
@@ -219,7 +388,7 @@
         <p class="eyebrow">COURTMATE · SOCIAL STUDIO</p>
         <h1>CourtMate v2 <span>社群貼文工作台</span></h1>
       </div>
-      <div class="top-actions"><div class="status"><strong>第 6 節</strong> · 存檔與試用　｜　品牌配色暫用</div><button class="settings-trigger" id="new-post" type="button">＋ 新的一篇</button><button class="settings-trigger" id="open-posts" type="button">📁 我的貼文</button><button class="settings-trigger" id="open-settings" type="button">⚙ 設定</button></div>
+      <div class="top-actions"><div class="status"><strong>保存與交付版</strong> · 本機資料</div><button class="settings-trigger" id="new-post" type="button">＋ 新的一篇</button><button class="settings-trigger" id="open-posts" type="button">📁 我的貼文</button><button class="settings-trigger" id="open-backup" type="button">🧳 備份與還原</button><button class="settings-trigger" id="open-settings" type="button">⚙ 設定</button></div>
     </div>
   </header>
   <div class="intro">
@@ -234,6 +403,46 @@
         <p class="panel-desc">先寫一個真實的球友情境；不確定的資訊留在卡片裡。</p>
       </div>
       <form class="fields" id="material-fields"></form>
+      <section class="post-pictures" aria-labelledby="pictures-title">
+        <h3 id="pictures-title">🖼 這篇的圖與影片</h3>
+        <button class="secondary-action" id="upload-pictures" type="button">📤 上傳圖片／影片</button>
+        <input id="picture-input" type="file" accept="image/*,video/*" multiple aria-label="上傳這篇的圖片或影片">
+        <div id="unified-media-controls"></div>
+        <label class="image-description" for="image-prompt">圖片描述（要畫什麼）</label>
+        <textarea id="image-prompt" placeholder="例如：溫暖午後的網球場，兩位球友準備練球，清爽插畫風格"></textarea>
+        <div class="dialog-actions"><button class="primary-action" id="generate-image" type="button">🎨 生圖</button><button class="secondary-action" id="plan-image" type="button">🪄 AI 想圖再畫</button></div>
+        <p class="helper">「想圖再畫」會先讀目前平台貼文與圖片規格，再自動生圖；兩步分別計費。描述會保留，可修改後再按「🎨 生圖」。</p>
+        <p id="image-status" class="dialog-status" role="status"></p>
+        <p id="image-plan-usage" class="helper" role="status"></p>
+        <p id="image-usage" class="helper" role="status"></p>
+        <div id="picture-list" class="picture-list"></div>
+        <div id="media-strip" class="media-strip"></div>
+        <p class="form-message" id="media-status" role="status"></p>
+        <section class="card-design" aria-labelledby="card-design-title">
+          <h3 id="card-design-title">圖卡加字</h3>
+          <label for="card-picture">正在編輯的圖片</label><select id="card-picture"></select>
+          <p class="helper">選擇加字頁面不會改封面。上方縮圖仍用來選主圖；打包時主圖放第一張，其餘依縮圖順序。</p>
+          <label for="card-text">圖上的字</label><textarea id="card-text" placeholder="例如：找個球友，一起上場。可自行換行，最多三行。"></textarea>
+          <div class="card-controls">
+            <div><label for="card-template">版型</label><select id="card-template"><option value="brand">品牌文字卡</option><option value="gradient">照片漸層卡</option><option value="panel">半透明文字框</option></select></div>
+            <div><label for="card-position">位置</label><select id="card-position"><option value="top">上</option><option value="middle">中</option><option value="bottom">下</option></select></div>
+            <div><label for="card-size">文字大小</label><select id="card-size"><option value="small">小</option><option value="medium">中</option><option value="large">大</option></select></div>
+            <div><label for="card-tone">文字框配色</label><select id="card-tone"><option value="light">米白底・深綠字</option><option value="dark">深綠底・米白字</option></select></div>
+          </div>
+          <label for="card-opacity">底層不透明度：<output id="card-opacity-value">88%</output></label><input id="card-opacity" type="range" min="0" max="100" step="1" value="88">
+          <p class="helper" id="card-template-hint"></p>
+          <button class="secondary-action" id="card-apply-all" type="button">套用樣式到全部圖片</button>
+          <label for="card-export-size">下載尺寸</label><select id="card-export-size"></select>
+          <p class="helper">下方成品預覽依下載尺寸；右側手機依平台比例。修改字與版型不用重新生圖。</p>
+          <div id="card-design-preview" class="card-design-preview"></div>
+          <p id="card-design-status" class="helper" role="status"></p>
+        </section>
+        <div class="dialog-actions"><button class="secondary-action" id="download-picture" type="button">⬇ 下載這張圖 PNG</button><button class="secondary-action" id="download-cards" type="button">📦 打包全部圖卡 ZIP</button><button class="secondary-action" id="download-video" type="button">⬇ 下載目前影片</button></div>
+        <p class="helper">原始底圖保留；圖片會依所選尺寸裁切，較大尺寸可能放大。影片保留原檔。</p>
+        <p class="helper" id="picture-storage" role="status"></p>
+        <p class="helper" id="warehouse-storage" role="status"></p>
+        <p class="dialog-status" id="picture-status" role="status"></p>
+      </section>
     </section>
     <section class="panel" aria-labelledby="editor-title">
       <div class="panel-head">
@@ -245,9 +454,10 @@
         <div class="tabs" id="platform-tabs" role="tablist" aria-label="貼文平台"></div>
         <label class="editor-label" for="post-editor">IG 貼文內容</label>
         <textarea class="post-editor" id="post-editor" placeholder="先在這裡寫下貼文草稿。例：週末有空想打球，卻一直約不到合得來的球友……"></textarea>
+        <div class="dialog-actions"><button class="secondary-action" id="copy-post" type="button">📋 複製目前平台文字</button></div><p class="dialog-status" id="delivery-status" role="status"></p>
         <div class="count-row"><span id="character-count" role="status">0 字</span><label for="character-limit">此平台字數上限（可選）</label><input id="character-limit" type="number" min="1" step="1" placeholder="未設定"></div>
         <p class="helper">在這裡編輯文字，右側手機會立即更新。切換平台不會清掉其他平台的草稿。</p>
-        <p class="helper">編輯內容會自動暫存於這個瀏覽器。按「存檔」可放進「我的貼文」。</p>
+        <p class="helper">每篇編輯會自動保存在「我的貼文」。資料只在這個瀏覽器，請定期下載備份。</p>
         <section class="assistant-panel" aria-labelledby="assistant-title">
           <button class="secondary-action" id="undo-ai" type="button" disabled>↩ 復原上一版</button>
           <button class="secondary-action" id="check-ai" type="button">🔍 檢查官</button>
@@ -296,6 +506,20 @@
       </div>
     </section>
   </main>
+  <dialog id="backup-dialog" aria-labelledby="backup-title">
+    <div class="dialog-head"><div><h2 id="backup-title">備份與還原</h2><p>帶走貼文、圖、影片、對話、上一版、品牌規格與用量紀錄。備份不含兩組金鑰。</p></div><button class="icon-close" type="button" data-close="backup-dialog" aria-label="關閉備份與還原">×</button></div>
+    <div class="dialog-body">
+      <button class="primary-action" id="export-backup" type="button">⬇ 下載完整備份</button>
+      <p class="helper">先下載備份，再換瀏覽器或清除資料。含影片的備份檔可能很大；還原不會累加其他裝置的費用紀錄。</p>
+      <label for="backup-input">選擇工作台備份檔</label><input id="backup-input" type="file" accept=".json,application/json">
+      <p id="restore-summary" class="helper">還原會加入貼文，保留目前內容；品牌規格與金鑰維持本機設定。</p>
+      <button class="secondary-action" id="restore-backup" type="button" disabled>加入備份裡的貼文</button>
+      <p id="backup-status" class="dialog-status" role="status"></p>
+      <hr><p class="helper">搬移或還原前，這個瀏覽器會保留一份本機快照。它不能取代下載備份。</p>
+      <button class="secondary-action" id="download-snapshot" type="button">⬇ 下載上次搬移／還原前的備份</button>
+      <p class="helper">單獨帶入備份內的品牌規格、檢查清單與模型設定：</p><button class="secondary-action" id="restore-config" type="button" disabled>套用備份的品牌與模型設定</button>
+    </div>
+  </dialog>
   <dialog id="settings-dialog" aria-labelledby="settings-title">
     <div class="dialog-head"><div><h2 id="settings-title">品牌與檢查設定</h2><p>貼上一次，存在這個瀏覽器。品牌規格更新時記得重新貼上。</p></div><button class="icon-close" type="button" data-close="settings-dialog" aria-label="關閉設定">×</button></div>
     <div class="dialog-body">
@@ -310,14 +534,24 @@
       <select id="or-model"><optgroup label="DeepSeek"><option value="deepseek/deepseek-v4.1-flash">deepseek/deepseek-v4.1-flash</option><option value="deepseek/deepseek-v4-pro">deepseek/deepseek-v4-pro</option><option value="deepseek/deepseek-v3.2">deepseek/deepseek-v3.2</option></optgroup><optgroup label="Kimi"><option value="moonshotai/kimi-k2.6">moonshotai/kimi-k2.6</option><option value="moonshotai/kimi-k2.5">moonshotai/kimi-k2.5</option><option value="moonshotai/kimi-k3">moonshotai/kimi-k3</option></optgroup><optgroup label="MiniMax"><option value="minimax/minimax-m3">minimax/minimax-m3</option><option value="minimax/minimax-m2.7">minimax/minimax-m2.7</option><option value="minimax/minimax-m2.5">minimax/minimax-m2.5</option></optgroup></select>
       <label for="custom-model">或自己打模型名稱</label>
       <input id="custom-model" type="text" placeholder="有填就優先使用；清空後用上方選單" autocomplete="off" spellcheck="false">
-      <label for="thinking">思考</label>
+      <label for="thinking">檢查官的思考程度</label>
       <select id="thinking"><option value="low">少想一點（預設）</option><option value="medium">多想一點</option><option value="high">想很久</option></select>
+      <p class="helper">寫文與小幫手固定少想一點，優先產出正文。這個選項只調整 OpenRouter 檢查官。</p>
       </fieldset>
       <fieldset class="ai-settings-group"><legend>第二組：Gemini</legend>
       <label for="gemini-key">Gemini 金鑰</label>
       <input id="gemini-key" type="password" autocomplete="off" spellcheck="false" placeholder="貼上自己的 Gemini 金鑰">
       <label for="gemini-model">Gemini 模型</label>
       <select id="gemini-model"><option>gemini-3.8-flash</option><option>gemini-3.6-flash</option><option>gemini-3.5-flash-lite</option><option>gemini-3.1-flash-lite</option></select>
+      </fieldset>
+      <fieldset class="ai-settings-group"><legend>生圖</legend>
+      <p class="helper">使用第一組 OpenRouter 的金鑰。</p>
+      <label for="image-spec">圖片規格</label>
+      <textarea id="image-spec" placeholder="貼上第 4 節的圖片規格：風格、光線、顏色、常出現的東西、構圖、不要的"></textarea>
+      <label for="image-model">生圖模型</label>
+      <select id="image-model"><option>bytedance-seed/seedream-5-0-flash</option><option>qwen/qwen-image-2.1-turbo</option><option>qwen/qwen-image-3</option><option>bytedance-seed/seedream-5-0-pro</option><option>google/gemini-3.1-flash-lite-image</option></select>
+      <label for="custom-image-model">或自己打生圖模型名稱</label>
+      <input id="custom-image-model" type="text" autocomplete="off" spellcheck="false" placeholder="有填就用這個；清空後用上方選單">
       </fieldset>
       <label for="provider-mode">先用哪一組</label>
       <select id="provider-mode"><option value="auto">先用 OpenRouter，失敗了自動換 Gemini（預設）</option><option value="gemini">只用 Gemini</option><option value="openrouter">只用 OpenRouter</option></select>
@@ -343,6 +577,234 @@
     <div class="dialog-body"><div class="board" id="post-list"></div><p class="dialog-status" id="posts-status" role="status"></p></div>
   </dialog>
   <script>
+    // 保存與交付核心：可攜格式不包含服務金鑰。
+    function normalizeCardDesign(value) {
+      const d = value && typeof value === 'object' ? value : {};
+      return { text: typeof d.text === 'string' ? d.text : '', template: ['brand', 'gradient', 'panel'].includes(d.template) ? d.template : 'brand', position: ['top', 'middle', 'bottom'].includes(d.position) ? d.position : 'bottom', size: ['small', 'medium', 'large'].includes(d.size) ? d.size : 'medium', opacity: Number.isFinite(d.opacity) ? Math.min(100, Math.max(0, d.opacity)) : 88, tone: d.tone === 'dark' ? 'dark' : 'light' };
+    }
+    function copyCardStyle(collection, id) {
+      const source = collection.find(pic => pic.id === id);
+      if (!source) return collection;
+      const style = normalizeCardDesign(source.design);
+      return collection.map(pic => ({ ...pic, design: { ...style, text: normalizeCardDesign(pic.design).text } }));
+    }
+    function orderedCardPictures(collection, mainId) {
+      return [...collection.filter(pic => pic.id === mainId), ...collection.filter(pic => pic.id !== mainId)];
+    }
+    function wrapCardText(text, maxWidth, measure) {
+      const lines = [];
+      for (const paragraph of String(text).replace(/\r\n?/g, '\n').split('\n')) {
+        let line = '';
+        for (const char of Array.from(paragraph)) {
+          if (line && measure(line + char) > maxWidth) { lines.push(line); line = char; }
+          else line += char;
+        }
+        lines.push(line);
+      }
+      return { lines, overflow: lines.length > 3 || lines.some(line => measure(line) > maxWidth) };
+    }
+    function cardContrast(a, b) {
+      const luminance = rgb => rgb.map(v => { const n = v / 255; return n <= .04045 ? n / 12.92 : ((n + .055) / 1.055) ** 2.4; }).reduce((sum, v, i) => sum + v * [.2126, .7152, .0722][i], 0);
+      const x = luminance(a), y = luminance(b);
+      return (Math.max(x, y) + .05) / (Math.min(x, y) + .05);
+    }
+    function newStudioId() { return globalThis.crypto?.randomUUID?.() || `${Date.now()}-${Math.random()}`; }
+    function pictureReferences(item) {
+      return (item.pictures || []).map(({ id, name, width, height, design }) => ({ id, name, width, height, design: normalizeCardDesign(design) }));
+    }
+    function portablePost(item) {
+      const keys = ['id', 'card', 'type', 'format', 'mainPictureId', 'status', 'posts', 'platform', 'assistantHistories', 'previousPosts', 'imagePrompt', 'cardExportSize', 'name', 'savedAt'];
+      return { ...Object.fromEntries(keys.filter(key => item[key] !== undefined).map(key => [key, item[key]])), pictures: pictureReferences(item), media: (item.media || []).map(({ id, name, type, size }) => ({ id, name, type, size })) };
+    }
+    function publicSettings(value) {
+      return Object.fromEntries(['brandSpec', 'checklist', 'imageSpec', 'model', 'customModel', 'thinking', 'geminiModel', 'providerMode', 'imageModel', 'customImageModel'].filter(key => typeof value?.[key] === 'string').map(key => [key, value[key]]));
+    }
+    function makeBackup(posts, draft, assets, config, limits, usage) {
+      return validateBackup({ format: 'courtmate-studio-backup', version: 1, createdAt: new Date().toISOString(), posts: posts.map(portablePost), draft: draft ? portablePost(draft) : null, assets, settings: publicSettings(config), limits, usage });
+    }
+    function validateBackup(input) {
+      if (!input || input.format !== 'courtmate-studio-backup' || input.version !== 1 || !Array.isArray(input.posts) || !Array.isArray(input.assets)) throw new Error('這不是支援的工作台備份檔。');
+      const idOK = id => typeof id === 'string' && id.length > 0 && id.length <= 256;
+      const assets = new Map();
+      for (const asset of input.assets) {
+        if (!asset || !idOK(asset.id) || assets.has(asset.id) || typeof asset.dataUrl !== 'string' || !/^data:(image\/(jpeg|png|webp|gif|avif)|video\/[a-z0-9.+-]+);base64,[A-Za-z0-9+/]+={0,2}$/i.test(asset.dataUrl)) throw new Error('備份中的圖片或影片格式不正確，沒有還原。');
+        assets.set(asset.id, asset);
+      }
+      const checkPost = post => {
+        if (!post || typeof post !== 'object' || !post.card || typeof post.card !== 'object' || Array.isArray(post.card) || Object.values(post.card).some(value => typeof value !== 'string') || !post.posts || typeof post.posts !== 'object' || !Array.isArray(post.pictures || []) || !Array.isArray(post.media || []) || post.id != null && !idOK(post.id)) throw new Error('備份中的貼文資料不完整，沒有還原。');
+        for (const platform of PLATFORMS) if (post.posts[platform] !== undefined && typeof post.posts[platform] !== 'string') throw new Error('備份中的貼文文字格式不正確。');
+        for (const pic of post.pictures || []) if (!idOK(pic?.id) || !assets.has(pic.id) || !assets.get(pic.id).dataUrl.startsWith('data:image/')) throw new Error('備份缺少圖片，無法完整還原。');
+        for (const media of post.media || []) if (!idOK(media?.id) || !assets.has(media.id) || typeof media.type !== 'string' || !/^(image|video)\//.test(media.type) || !assets.get(media.id).dataUrl.startsWith(`data:${media.type};base64,`)) throw new Error('備份缺少圖片或影片，無法完整還原。');
+        return portablePost(post);
+      };
+      const posts = input.posts.map(checkPost);
+      if (input.draft) checkPost(input.draft);
+      return { format: input.format, version: 1, createdAt: input.createdAt, posts, draft: input.draft ? portablePost(input.draft) : null, assets: input.assets.map(asset => ({ id: asset.id, name: typeof asset.name === 'string' ? asset.name : '素材', dataUrl: asset.dataUrl })), settings: publicSettings(input.settings), limits: Object.fromEntries(PLATFORMS.filter(p => Number.isFinite(input.limits?.[p]) && input.limits[p] > 0).map(p => [p, input.limits[p]])), usage: input.usage && typeof input.usage === 'object' ? input.usage : {} };
+    }
+    function upsertWorkingPost(collection, item) {
+      return [{ ...portablePost(item), name: item.card?.topic?.trim() || '未命名貼文', savedAt: new Date().toISOString() }, ...collection.filter(post => post.id !== item.id)];
+    }
+    function prepareRestore(input, existing, active, makeId = newStudioId) {
+      const backup = validateBackup(input);
+      const assetIds = new Map(backup.assets.map(asset => [asset.id, makeId()]));
+      const postIds = new Map();
+      const remap = post => {
+        const key = post.id || '__draft__';
+        if (!postIds.has(key)) postIds.set(key, makeId());
+        return { ...post, id: postIds.get(key), pictures: pictureReferences(post).map(pic => ({ ...pic, id: assetIds.get(pic.id) })), mainPictureId: assetIds.get(post.mainPictureId) || null, media: (post.media || []).map(media => ({ ...media, id: assetIds.get(media.id) })) };
+      };
+      let posts = [...existing];
+      if (active) posts = upsertWorkingPost(posts, { ...active, id: active.id || makeId() });
+      for (const post of backup.posts) posts = upsertWorkingPost(posts, remap(post));
+      const draft = backup.draft ? remap(backup.draft) : null;
+      if (draft) posts = upsertWorkingPost(posts, draft);
+      return { posts, draft, assets: backup.assets.map(asset => ({ ...asset, id: assetIds.get(asset.id) })), settings: backup.settings, limits: backup.limits };
+    }
+    function coverCrop(width, height, outWidth, outHeight) {
+      if (![width, height, outWidth, outHeight].every(v => Number.isFinite(v) && v > 0)) throw new Error('圖片尺寸不正確。');
+      const scale = Math.max(outWidth / width, outHeight / height);
+      const w = outWidth / scale, h = outHeight / scale;
+      return [(width - w) / 2, (height - h) / 2, w, h];
+    }
+    // 保存與交付介面
+    const PIC_SIZE = { FB: [1080, 1080], IG: [1080, 1350], LINE: [1040, 1040], Threads: [1080, 1350] };
+    const SIZES = { platform: { label: '跟著平台' }, square: { label: '方形', width: 1080, height: 1080 }, portrait: { label: '直式', width: 1080, height: 1350 }, story: { label: '限動', width: 1080, height: 1920 }, avatar: { label: 'LINE 大頭貼', width: 640, height: 640 }, line: { label: 'LINE 群發圖', width: 1040, height: 1040 } };
+    // 圖卡排版與匯出：預覽及下載共用同一張畫布，不改寫原圖。
+    async function drawCard(pic, width, height) {
+      if (!pic?.dataUrl) throw new Error(`找不到「${pic?.name || '圖片'}」，請重新上傳或從備份還原。`);
+      await document.fonts?.ready;
+      const image = await new Promise((resolve, reject) => { const img = new Image(); img.onload = () => resolve(img); img.onerror = () => reject(new Error(`「${pic.name}」無法讀取。`)); img.src = pic.dataUrl; });
+      const canvas = document.createElement('canvas'); canvas.width = width; canvas.height = height;
+      const c = canvas.getContext('2d', { willReadFrequently: true }); if (!c) throw new Error('此瀏覽器無法輸出圖卡。');
+      c.fillStyle = '#fffefa'; c.fillRect(0, 0, width, height);
+      const d = normalizeCardDesign(pic.design);
+      if (!d.text.trim()) { c.drawImage(image, ...coverCrop(image.naturalWidth, image.naturalHeight, width, height), 0, 0, width, height); return { canvas, overflow: false, contrast: null }; }
+      const fontSize = width * ({ small: .052, medium: .067, large: .082 }[d.size]);
+      const family = getComputedStyle(document.documentElement).fontFamily;
+      c.font = `700 ${fontSize}px ${family}`;
+      const pad = width * .045, outer = width * .08;
+      const layout = wrapCardText(d.text, width - 2 * (outer + pad), text => c.measureText(text).width);
+      const lines = layout.lines.slice(0, 3), lineHeight = fontSize * 1.38, textHeight = lines.length * lineHeight;
+      const bandHeight = Math.max(height * .26, textHeight + 2 * pad);
+      const y = d.position === 'top' ? outer : d.position === 'middle' ? (height - textHeight) / 2 : height - outer - textHeight;
+      const top = Math.max(0, y - pad), bottom = Math.min(height, y + textHeight + pad);
+      let color = [40, 91, 72];
+      if (d.template === 'brand') {
+        const split = d.position === 'top' ? bandHeight : height - bandHeight;
+        if (d.position === 'top') c.drawImage(image, ...coverCrop(image.naturalWidth, image.naturalHeight, width, height - split), 0, split, width, height - split);
+        else if (d.position === 'bottom') c.drawImage(image, ...coverCrop(image.naturalWidth, image.naturalHeight, width, split), 0, 0, width, split);
+        else c.drawImage(image, ...coverCrop(image.naturalWidth, image.naturalHeight, width, height), 0, 0, width, height);
+        c.fillStyle = '#fffefa'; c.fillRect(0, d.position === 'top' ? 0 : d.position === 'bottom' ? split : top, width, d.position === 'middle' ? bottom - top : bandHeight);
+        c.fillStyle = '#d9df89'; c.fillRect(outer, d.position === 'top' ? bandHeight - width * .013 : d.position === 'bottom' ? split : top, width * .12, width * .007);
+      } else {
+        c.drawImage(image, ...coverCrop(image.naturalWidth, image.naturalHeight, width, height), 0, 0, width, height);
+        if (d.template === 'gradient') {
+          color = [255, 254, 250];
+          const start = Math.max(0, top - height * .12), end = Math.min(height, bottom + height * .12);
+          const gradient = c.createLinearGradient(0, start, 0, end);
+          gradient.addColorStop(0, 'rgba(24,62,48,0)'); gradient.addColorStop(.25, `rgba(24,62,48,${d.opacity / 100})`); gradient.addColorStop(.75, `rgba(24,62,48,${d.opacity / 100})`); gradient.addColorStop(1, 'rgba(24,62,48,0)');
+          c.fillStyle = gradient; c.fillRect(0, start, width, end - start);
+        } else {
+          color = d.tone === 'dark' ? [255, 254, 250] : [40, 91, 72];
+          c.fillStyle = d.tone === 'dark' ? `rgba(24,62,48,${d.opacity / 100})` : `rgba(255,254,250,${d.opacity / 100})`;
+          c.beginPath(); c.roundRect(outer, top, width - 2 * outer, bottom - top, width * .025); c.fill();
+        }
+      }
+      // 在畫字前，取文字承載區的最差對比；取樣只是提示，仍需用手機看成品。
+      const sampleY = Math.max(0, Math.floor(y)), sampleH = Math.max(1, Math.min(height - sampleY, Math.ceil(textHeight)));
+      const pixels = c.getImageData(Math.floor(outer + pad), sampleY, Math.floor(width - 2 * (outer + pad)), sampleH).data;
+      let contrast = 21;
+      for (let i = 0; i < pixels.length; i += 16) contrast = Math.min(contrast, cardContrast(color, [pixels[i], pixels[i + 1], pixels[i + 2]]));
+      c.fillStyle = `rgb(${color.join(',')})`; c.textAlign = 'center'; c.textBaseline = 'middle';
+      for (let i = 0; i < lines.length; i++) c.fillText(lines[i], width / 2, y + lineHeight * (i + .5));
+      return { canvas, overflow: layout.overflow || y < outer || y + textHeight > height - outer + 1, contrast };
+    }
+    function cardCRC32(bytes) {
+      let crc = 0xffffffff;
+      for (const value of bytes) { crc ^= value; for (let j = 0; j < 8; j++) crc = (crc >>> 1) ^ (0xedb88320 & -(crc & 1)); }
+      return (crc ^ 0xffffffff) >>> 0;
+    }
+    async function makeCardZip(files) {
+      if (files.length > 65535) throw new Error('圖片數量超過 ZIP 可處理的範圍。');
+      const chunks = [], directories = []; let offset = 0;
+      for (const file of files) {
+        const name = new TextEncoder().encode(file.name), bytes = file.bytes, crc = cardCRC32(bytes);
+        if (bytes.length >= 0xffffffff || offset + bytes.length >= 0xffffffff) throw new Error('圖卡包太大，請分批下載。');
+        const header = new Uint8Array(30 + name.length), v = new DataView(header.buffer);
+        v.setUint32(0, 0x04034b50, true); v.setUint16(4, 20, true); v.setUint16(6, 0x800, true); v.setUint16(12, 33, true);
+        v.setUint32(14, crc, true); v.setUint32(18, bytes.length, true); v.setUint32(22, bytes.length, true); v.setUint16(26, name.length, true); header.set(name, 30);
+        const directory = new Uint8Array(46 + name.length), d = new DataView(directory.buffer);
+        d.setUint32(0, 0x02014b50, true); d.setUint16(4, 20, true); d.setUint16(6, 20, true); d.setUint16(8, 0x800, true); d.setUint16(14, 33, true);
+        d.setUint32(16, crc, true); d.setUint32(20, bytes.length, true); d.setUint32(24, bytes.length, true); d.setUint16(28, name.length, true); d.setUint32(42, offset, true); directory.set(name, 46);
+        chunks.push(header, bytes); directories.push(directory); offset += header.length + bytes.length;
+      }
+      const directoryLength = directories.reduce((sum, bytes) => sum + bytes.length, 0), end = new Uint8Array(22), e = new DataView(end.buffer);
+      e.setUint32(0, 0x06054b50, true); e.setUint16(8, files.length, true); e.setUint16(10, files.length, true); e.setUint32(12, directoryLength, true); e.setUint32(16, offset, true);
+      const result = new Uint8Array(offset + directoryLength + 22); let cursor = 0;
+      for (const bytes of [...chunks, ...directories, end]) { result.set(bytes, cursor); cursor += bytes.length; }
+      return result;
+    }
+    // 圖卡編輯介面
+    const CARD_FIELDS = { text: 'card-text', template: 'card-template', position: 'card-position', size: 'card-size', opacity: 'card-opacity', tone: 'card-tone' };
+    for (const [key, size] of Object.entries(SIZES)) {
+      const option = document.createElement('option'); option.value = key; option.textContent = size.label + (size.width ? ` ${size.width}×${size.height}` : ''); document.getElementById('card-export-size').append(option);
+    }
+    function cardDimensions() {
+      const key = document.getElementById('card-export-size').value;
+      return SIZES[key]?.width ? [SIZES[key].width, SIZES[key].height] : PIC_SIZE[currentPlatform];
+    }
+    function refreshCardControls() {
+      const selector = document.getElementById('card-picture'); selector.replaceChildren();
+      if (!pictures.some(pic => pic.id === editingPictureId)) editingPictureId = pictures.find(pic => pic.id === mainPictureId)?.id || pictures[0]?.id || null;
+      orderedCardPictures(pictures, mainPictureId).forEach((pic, i) => { const option = document.createElement('option'); option.value = pic.id; option.textContent = `第 ${i + 1} 張${pic.id === mainPictureId ? '（封面）' : ''}・${pic.name}`; selector.append(option); });
+      selector.value = editingPictureId || '';
+      const pic = pictures.find(pic => pic.id === editingPictureId), design = normalizeCardDesign(pic?.design);
+      selector.disabled = !pic;
+      for (const [key, id] of Object.entries(CARD_FIELDS)) { const input = document.getElementById(id); input.value = design[key]; input.disabled = !pic; }
+      document.getElementById('card-apply-all').disabled = !pic || pictures.length < 2;
+      updateCardTemplateHint(); renderCardPreview();
+    }
+    function updateCardTemplateHint() {
+      const template = document.getElementById('card-template').value;
+      document.getElementById('card-opacity').disabled = !editingPictureId || template === 'brand';
+      document.getElementById('card-tone').disabled = !editingPictureId || template !== 'panel';
+      document.getElementById('card-opacity-value').textContent = document.getElementById('card-opacity').value + '%';
+      document.getElementById('card-template-hint').textContent = template === 'brand' ? '品牌文字卡使用實色米白承載文字，不透明度與框色不適用。' : template === 'gradient' ? '照片漸層卡在文字區加深綠漸層，搭配米白字；背景太亮時請加強不透明度。' : '只在文字背後加半透明底框。亮底配深綠字，深底配米白字。';
+    }
+    async function renderCardPreview() {
+      const version = ++cardPreviewVersion, host = document.getElementById('card-design-preview'), status = document.getElementById('card-design-status');
+      const pic = pictures.find(pic => pic.id === editingPictureId);
+      if (!pic?.dataUrl) { host.replaceChildren(); status.textContent = pic ? '正在載入圖片；若持續無法顯示，請重新上傳或還原。' : '先上傳圖片，再選一張加字。'; return; }
+      const platform = currentPlatform, [width, height] = cardDimensions(), snapshot = { ...pic, design: normalizeCardDesign(pic.design) };
+      try {
+        const result = await drawCard(snapshot, width, height);
+        if (version !== cardPreviewVersion) return;
+        result.canvas.setAttribute('role', 'img'); result.canvas.setAttribute('aria-label', `圖卡成品預覽：${snapshot.design.text || snapshot.name}`);
+        host.replaceChildren(result.canvas);
+        const warnings = [];
+        if (result.overflow) warnings.push('⚠️ 文字超過三行或安全邊界，請減少字數或調小字級；調整前不能下載。');
+        if (result.contrast !== null && result.contrast < 4.5) warnings.push('⚠️ 文字背景對比偏低，請提高不透明度、切換框色或改用品牌文字卡。');
+        if (document.getElementById('card-export-size').value === 'avatar' && snapshot.design.text.trim() && snapshot.design.position !== 'middle') warnings.push('⚠️ 大頭貼實際會切成圓形，建議文字放中間，並確認圓形裁切後不會切字。');
+        status.textContent = [`${width}×${height}｜${document.getElementById('card-export-size').value === 'platform' ? platform : SIZES[document.getElementById('card-export-size').value].label}`, ...warnings, ...(result.contrast === null ? [] : [`背景最差取樣對比約 ${result.contrast.toFixed(1)}:1，僅供參考，請用手機確認閱讀效果。`])].join('\n');
+        status.classList.toggle('storage-error', warnings.length > 0);
+      } catch (error) { if (version === cardPreviewVersion) { host.replaceChildren(); deliveryError(status, error); } }
+    }
+    document.getElementById('card-picture').addEventListener('change', event => {
+      editingPictureId = event.target.value;
+      pictureSlide = Math.max(0, orderedCardPictures(pictures, mainPictureId).findIndex(pic => pic.id === editingPictureId));
+      refreshCardControls(); renderPreview();
+    });
+    for (const [key, id] of Object.entries(CARD_FIELDS)) document.getElementById(id).addEventListener('input', () => {
+      const pic = pictures.find(pic => pic.id === editingPictureId); if (!pic) return;
+      const value = document.getElementById(id).value;
+      pic.design = normalizeCardDesign({ ...normalizeCardDesign(pic.design), [key]: key === 'opacity' ? Number(value) : value });
+      updateCardTemplateHint(); renderCardPreview(); renderPreview(); autoSaveDraft();
+    });
+    document.getElementById('card-export-size').addEventListener('change', () => { renderCardPreview(); autoSaveDraft(); });
+    document.getElementById('card-apply-all').addEventListener('click', () => {
+      pictures = copyCardStyle(pictures, editingPictureId); refreshCardControls(); renderPreview();
+      if (autoSaveDraft()) document.getElementById('picture-status').textContent = '已套用樣式，各頁文字與原始底圖保持原樣。';
+    });
     const OPENROUTER_MODEL = 'deepseek/deepseek-v4.1-flash';
     // 課堂設定集中在這裡；正式名稱、帳號與主色尚未定案。
     const BRAND = { name: 'CourtMate', account: '帳號名稱待確認' };
@@ -403,8 +865,8 @@
         if (field.id === 'visual') {
           const picker = document.createElement('div');
           picker.className = 'media-picker';
-          picker.innerHTML = '<label for="format-select">呈現形式</label><select id="format-select"><option>純文字</option><option>單圖</option><option>輪播</option><option>影片</option></select><label for="media-input">加入照片或影片</label><input id="media-input" type="file" accept="image/*,video/*" multiple><p class="media-help">可選多個檔案；拖動或用箭頭調整輪播順序。素材只保存在這個瀏覽器，複製 HTML 檔不會帶走照片或影片。</p><div class="media-strip" id="media-strip"></div><p class="form-message" id="media-status" role="status"></p>';
-          wrapper.append(picker);
+          picker.innerHTML = '<label for="format-select">呈現形式</label><select id="format-select"><option>純文字</option><option>單圖</option><option>輪播</option><option>影片</option></select><p class="media-help">圖片與影片一起從上方上傳。點圖片選主圖；輪播會依縮圖順序顯示，影片選「影片」預覽。所有檔案存在這個瀏覽器的素材倉庫。</p>';
+          document.getElementById('unified-media-controls').append(picker);
         }
       }
       fieldHost.append(wrapper);
@@ -414,6 +876,7 @@
     promptAction.innerHTML = '<button class="primary-action" id="generate-ai" type="button">✨ 讓 AI 寫</button><p class="form-message" id="ai-status" role="status" aria-live="polite"></p><p class="dialog-status" id="ai-usage" role="status"></p><div class="ask-box" id="ai-questions" hidden></div><textarea id="ai-raw" aria-label="AI 原始回覆，可複製後用貼回功能處理" readonly hidden></textarea><div class="dialog-actions"><button class="primary-action" id="build-prompt" type="button">🧩 組好指令</button><button class="secondary-action" id="open-import" type="button">📥 貼回 AI 寫好的</button><button class="secondary-action" id="save-post" type="button">💾 存檔</button></div><p class="form-message" id="prompt-error" role="status"></p><p class="dialog-status" id="storage-status" role="status"></p>';
     fieldHost.append(promptAction);
     const tabHost = document.getElementById('platform-tabs');
+    tabHost.addEventListener('click', () => renderCardPreview());
     const editor = document.getElementById('post-editor');
     const editorLabel = document.querySelector('.editor-label');
     const characterCount = document.getElementById('character-count');
@@ -435,6 +898,7 @@
       else delete characterLimits[currentPlatform];
       try { localStorage.setItem(LIMITS_KEY, JSON.stringify(characterLimits)); } catch (_) { /* 本次仍可計數 */ }
       updateCharacterCount();
+      updatePictureStorage();
     });
     const phone = document.getElementById('phone-preview');
     const posts = Object.fromEntries(PLATFORMS.map(platform => [platform, '']));
@@ -445,6 +909,17 @@
     let aiBusy = false;
     let postContextVersion = 0;
     let fbExpanded = false;
+    let pictures = [];
+    let mainPictureId = null;
+    let pictureSaveFailed = false;
+    let imageGenerating = false;
+    let mediaProcessing = false;
+    let pictureSlide = 0;
+    let editingPictureId = null;
+    let cardPreviewVersion = 0;
+    let exportingCards = false;
+    let pictureHydrationVersion = 0;
+    let pictureHydration = Promise.resolve();
     let mediaItems = [];
     let mediaSlide = 0;
     let mediaLoadVersion = 0;
@@ -455,9 +930,12 @@
       if (typeof indexedDB === 'undefined') return Promise.resolve(null);
       return new Promise(resolve => {
         try {
-          const request = indexedDB.open('courtmate-day6-media-v1', 1);
-          request.onupgradeneeded = () => request.result.createObjectStore('files', { keyPath: 'id' });
-          request.onsuccess = () => resolve(request.result);
+          const request = indexedDB.open('courtmate-day6-media-v1', 2);
+          request.onupgradeneeded = () => {
+            if (!request.result.objectStoreNames.contains('files')) request.result.createObjectStore('files', { keyPath: 'id' });
+            if (!request.result.objectStoreNames.contains('snapshots')) request.result.createObjectStore('snapshots', { keyPath: 'id' });
+          };
+          request.onsuccess = () => { request.result.onversionchange = () => request.result.close(); resolve(request.result); };
           request.onerror = () => resolve(null);
           request.onblocked = () => resolve(null);
         } catch (_) { resolve(null); }
@@ -487,6 +965,76 @@
         } catch (_) { resolve(null); }
       });
     }
+
+    async function readMediaRecord(id) {
+      const database = await mediaDbPromise;
+      if (!database) throw new Error('圖片倉庫無法開啟。請關閉其他舊版工作台分頁，再重新整理。');
+      return new Promise((resolve, reject) => {
+        const request = database.transaction('files').objectStore('files').get(id);
+        request.onsuccess = () => resolve(request.result || null);
+        request.onerror = () => reject(new Error('無法讀取圖片倉庫。'));
+      });
+    }
+    async function writeMediaRecord(record) {
+      const database = await mediaDbPromise;
+      if (!database) throw new Error('圖片倉庫無法開啟，這次沒有儲存。');
+      return new Promise((resolve, reject) => {
+        const transaction = database.transaction('files', 'readwrite');
+        transaction.objectStore('files').put({ ...record, storedAt: Date.now() });
+        transaction.oncomplete = resolve;
+        transaction.onerror = transaction.onabort = () => reject(new Error('圖片倉庫存不進去，請保留此頁並先下載備份。'));
+      });
+    }
+    function blobAsDataURL(blob) {
+      return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(reader.result);
+        reader.onerror = () => reject(new Error('素材無法讀取。'));
+        reader.readAsDataURL(blob);
+      });
+    }
+    // 媒體搬移與備份：全部成功後才改寫原本的文字存檔。
+    async function migratePostAssets(item) {
+      const result = { ...item, pictures: [], media: [] };
+      const seen = new Set();
+      for (const pic of item.pictures || []) {
+        if (!pic || typeof pic.id !== 'string') throw new Error('舊圖片資料不完整，原存檔已保留。');
+        if (pic.dataUrl) {
+          if (!/^data:image\/jpeg;base64,[A-Za-z0-9+/=\s]+$/.test(pic.dataUrl)) throw new Error('舊圖片格式不完整，原存檔已保留。');
+          await writeMediaRecord({ id: pic.id, name: pic.name, dataUrl: pic.dataUrl });
+        } // 只有引用而檔案已遺失時，仍保留文字與引用，由載入畫面提醒補檔。
+        result.pictures.push({ id: pic.id, name: pic.name || '圖片', width: pic.width || 0, height: pic.height || 0, design: normalizeCardDesign(pic.design) });
+        seen.add(pic.id);
+      }
+      for (const media of item.media || []) {
+        if (seen.has(media.id)) continue;
+        const record = await readMediaRecord(media.id);
+        if (!record) { result.media.push({ ...media }); continue; } // 舊版已遺失的檔案仍保留引用並提醒。
+        if (media.type?.startsWith('image/') && record.blob) {
+          const pic = await compressPicture(new File([record.blob], media.name || '圖片', { type: media.type || record.blob.type }));
+          await writeMediaRecord({ id: media.id, name: media.name, dataUrl: pic.dataUrl, blob: record.blob });
+          result.pictures.push({ id: media.id, name: media.name, width: pic.width, height: pic.height });
+          seen.add(media.id);
+        } else if (media.type?.startsWith('image/') && record.dataUrl) {
+          result.pictures.push({ id: media.id, name: media.name, width: 0, height: 0 }); seen.add(media.id);
+        } else result.media.push({ ...media });
+      }
+      result.mainPictureId = result.pictures.some(pic => pic.id === item.mainPictureId) ? item.mainPictureId : result.pictures[0]?.id || null;
+      return result;
+    }
+    async function collectBackupAssets(collection, draft) {
+      const refs = new Map();
+      for (const item of [...collection, ...(draft ? [draft] : [])]) for (const asset of [...(item.pictures || []), ...(item.media || [])]) refs.set(asset.id, asset);
+      const assets = [];
+      for (const [id, ref] of refs) {
+        const record = await readMediaRecord(id);
+        const dataUrl = ref.dataUrl || (ref.type && record?.blob ? await blobAsDataURL(record.blob) : record?.dataUrl || (record?.blob ? await blobAsDataURL(record.blob) : null));
+        if (!dataUrl) throw new Error(`缺少「${ref.name || id}」，沒有產生不完整備份。請補回素材或移除失效引用後再試。`);
+        assets.push({ id, name: ref.name || '素材', dataUrl });
+      }
+      return assets;
+    }
+    // 媒體搬移介面
 
     function node(tag, className, content) {
       const element = document.createElement(tag);
@@ -527,6 +1075,327 @@
       return frame;
     }
 
+    // 這篇的圖：JPEG data URL 與貼文一同保存。
+    function pictureDimensions(width, height) {
+      const scale = Math.min(1, 1080 / Math.max(width, height));
+      return [Math.max(1, Math.round(width * scale)), Math.max(1, Math.round(height * scale))];
+    }
+    function compressPicture(file) {
+      return new Promise((resolve, reject) => {
+        const image = new Image();
+        const url = URL.createObjectURL(file);
+        const release = () => URL.revokeObjectURL(url);
+        image.onerror = () => { release(); reject(new Error(`「${file.name}」無法讀取，請改用 JPEG、PNG 或 WebP。`)); };
+        image.onload = () => {
+          try {
+            const [width, height] = pictureDimensions(image.naturalWidth, image.naturalHeight);
+            const canvas = document.createElement('canvas'); canvas.width = width; canvas.height = height;
+            const context = canvas.getContext('2d');
+            if (!context) throw new Error('瀏覽器無法處理圖片');
+            context.fillStyle = '#ffffff'; context.fillRect(0, 0, width, height);
+            context.drawImage(image, 0, 0, width, height);
+            const dataUrl = canvas.toDataURL('image/jpeg', 0.85);
+            if (!dataUrl.startsWith('data:image/jpeg;base64,')) throw new Error('瀏覽器無法轉成 JPEG');
+            resolve({ id: globalThis.crypto?.randomUUID?.() || `${Date.now()}-${Math.random()}`, name: file.name, dataUrl, width, height });
+          } catch (_) { reject(new Error(`「${file.name}」轉換失敗，請換一張圖片。`)); }
+          finally { release(); }
+        };
+        image.src = url;
+      });
+    }
+    function restorePictures(item) {
+      pictures = Array.isArray(item.pictures) ? item.pictures.filter(pic => pic && typeof pic.id === 'string' && (pic.dataUrl === undefined || typeof pic.dataUrl === 'string' && /^data:image\/jpeg;base64,[A-Za-z0-9+/=\s]+$/.test(pic.dataUrl))).map(pic => ({ id: pic.id, name: typeof pic.name === 'string' ? pic.name : '圖片', dataUrl: pic.dataUrl, width: Number(pic.width) || 0, height: Number(pic.height) || 0, design: normalizeCardDesign(pic.design) })) : [];
+      mainPictureId = pictures.some(pic => pic.id === item.mainPictureId) ? item.mainPictureId : pictures[0]?.id || null;
+      renderPictures();
+    }
+    async function hydratePictures() {
+      const version = ++pictureHydrationVersion;
+      const context = postContextVersion;
+      const missing = [];
+      for (const pic of pictures) {
+        if (pic.dataUrl) continue;
+        try {
+          const record = await readMediaRecord(pic.id);
+          if (version !== pictureHydrationVersion || context !== postContextVersion) return;
+          if (record?.dataUrl) pic.dataUrl = record.dataUrl;
+          else missing.push(pic.name);
+        } catch (_) { missing.push(pic.name); }
+      }
+      if (version !== pictureHydrationVersion || context !== postContextVersion) return;
+      renderPictures(); renderPreview();
+      if (missing.length) document.getElementById('picture-status').textContent = `找不到 ${missing.length} 張圖（${missing.join('、')}）。文字仍保留，請從備份還原或重新上傳。`;
+    }
+    function selectMainPicture(id) {
+      if (!pictures.some(pic => pic.id === id)) return;
+      mainPictureId = id; pictureSlide = 0; renderPictures(); renderPreview(); autoSaveDraft();
+    }
+    function deletePicture(id) {
+      pictures = pictures.filter(pic => pic.id !== id);
+      if (!pictures.some(pic => pic.id === mainPictureId)) mainPictureId = pictures[0]?.id || null;
+      pictureSlide = 0; renderPictures(); renderPreview(); if (autoSaveDraft() !== false) pruneMediaFiles().catch(() => {});
+    }
+    function renderPictures() {
+      const host = document.getElementById('picture-list'); host.replaceChildren();
+      pictures.forEach((pic, index) => {
+        const wrapper = node('div', 'picture-thumb' + (pic.id === mainPictureId ? ' is-main' : ''));
+        const select = node('button', 'picture-select'); select.type = 'button';
+        select.setAttribute('aria-label', `選第 ${index + 1} 張為主圖：${pic.name}`);
+        select.setAttribute('aria-pressed', String(pic.id === mainPictureId));
+        const image = node('img'); if (pic.dataUrl) image.src = pic.dataUrl; image.alt = pic.dataUrl ? pic.name : `${pic.name}（載入中或檔案遺失）`; select.append(image);
+        select.addEventListener('click', () => selectMainPicture(pic.id));
+        const remove = node('button', 'picture-remove', '×'); remove.type = 'button'; remove.setAttribute('aria-label', `刪除第 ${index + 1} 張：${pic.name}`);
+        remove.addEventListener('click', () => deletePicture(pic.id));
+        wrapper.append(select, remove);
+        if (pic.id === mainPictureId) wrapper.append(node('span', 'picture-main-label', '主圖'));
+        const order = node('div', 'media-controls');
+        for (const [label, delta] of [['←', -1], ['→', 1]]) {
+          const button = node('button', '', label); button.type = 'button'; button.disabled = index + delta < 0 || index + delta >= pictures.length;
+          button.setAttribute('aria-label', `將圖片「${pic.name}」${delta < 0 ? '往前' : '往後'}移`);
+          button.addEventListener('click', () => { const [pic] = pictures.splice(index, 1); pictures.splice(index + delta, 0, pic); pictureSlide = 0; renderPictures(); renderPreview(); autoSaveDraft(); }); order.append(button);
+        }
+        wrapper.append(order);
+        host.append(wrapper);
+      });
+      if (!pictures.length) host.append(node('p', 'helper', '上傳圖片後，點縮圖選主圖。'));
+      refreshCardControls();
+    }
+    function mainPictureFrame(platform) {
+      const format = document.getElementById('format-select')?.value;
+      if (format === '純文字' || format === '影片') return null;
+      const ordered = [pictures.find(item => item.id === mainPictureId), ...pictures.filter(item => item.id !== mainPictureId)].filter(Boolean);
+      const carousel = format === '輪播' && ordered.length > 1;
+      const pic = carousel ? ordered[pictureSlide % ordered.length] : ordered[0];
+      if (!pic?.dataUrl) return null;
+      const frame = node('div', 'post-picture-frame'); frame.style.aspectRatio = PIC_SIZE[platform].join(' / ');
+      const image = node('img'); image.src = pic.dataUrl; image.alt = pic.name;
+      image.style.width = '100%'; image.style.height = '100%'; image.style.objectFit = 'cover';
+      frame.append(image);
+      if (normalizeCardDesign(pic.design).text.trim()) {
+        drawCard({ ...pic, design: normalizeCardDesign(pic.design) }, ...PIC_SIZE[platform]).then(({ canvas }) => {
+          canvas.setAttribute('role', 'img'); canvas.setAttribute('aria-label', pic.design.text); image.replaceWith(canvas);
+        }).catch(() => { image.alt = `${pic.name}（文字預覽失敗，請查看左側成品預覽）`; });
+      }
+      if (carousel) {
+        frame.style.position = 'relative';
+        const tools = node('div', 'slide-tools');
+        const prev = node('button', 'slide-control', '‹'), next = node('button', 'slide-control', '›');
+        prev.type = next.type = 'button'; prev.setAttribute('aria-label', '上一張圖片'); next.setAttribute('aria-label', '下一張圖片');
+        prev.addEventListener('click', () => { pictureSlide = (pictureSlide - 1 + ordered.length) % ordered.length; renderPreview(); });
+        next.addEventListener('click', () => { pictureSlide = (pictureSlide + 1) % ordered.length; renderPreview(); });
+        tools.append(prev, node('span', 'slide-count', `${pictureSlide % ordered.length + 1} / ${ordered.length}`), next); frame.append(tools);
+      }
+      return frame;
+    }
+    function localStorageBytes() {
+      let bytes = 0;
+      for (let index = 0; index < localStorage.length; index++) {
+        const key = localStorage.key(index); if (key !== null) bytes += 2 * (key.length + (localStorage.getItem(key) || '').length);
+      }
+      return bytes;
+    }
+    function updatePictureStorage(success) {
+      if (success === false) pictureSaveFailed = true;
+      else if (success === true) pictureSaveFailed = false;
+      const status = document.getElementById('picture-storage');
+      let used = 0;
+      try { used = localStorageBytes() / (1024 * 1024); } catch (_) { pictureSaveFailed = true; }
+      status.textContent = pictureSaveFailed ? '⚠️ 抽屜滿了，剛剛的沒存到！' : `瀏覽器的抽屜（localStorage）：已用 ${used.toFixed(2)} MB`;
+      status.classList.toggle('picture-storage-error', pictureSaveFailed);
+    }
+    async function uploadPostPictures(files) {
+      const status = document.getElementById('picture-status');
+      const contextVersion = postContextVersion;
+      const button = document.getElementById('upload-pictures');
+      if (mediaProcessing) return;
+      mediaProcessing = true; button.disabled = true; status.textContent = '正在處理並保存素材…';
+      let added = 0; const errors = [];
+      try {
+        for (const file of files) {
+          if (file.type.startsWith('video/')) {
+            try {
+              const item = { id: newStudioId(), name: file.name, type: file.type, size: file.size };
+              await storeMediaFile(item, file);
+              if (contextVersion !== postContextVersion) return;
+              mediaItems.push(item); mediaUrls.set(item.id, URL.createObjectURL(file)); added++;
+              formatSelect.value = '影片'; renderMediaStrip(); renderPreview();
+              if (!autoSaveDraft()) errors.push('素材已在倉庫，但貼文暫存失敗。請保留此頁並下載備份。');
+            } catch (error) { errors.push(error.message); }
+            continue;
+          }
+          if (!file.type.startsWith('image/')) { errors.push(`「${file.name}」不是支援的圖片或影片。`); continue; }
+          try {
+            const pic = await compressPicture(file);
+            if (contextVersion !== postContextVersion) return;
+            await writeMediaRecord({ id: pic.id, name: pic.name, dataUrl: pic.dataUrl });
+            if (contextVersion !== postContextVersion) return;
+            pictures.push(pic); mainPictureId ||= pic.id; added++;
+            if (formatSelect.value === '純文字' || formatSelect.value === '影片') formatSelect.value = '單圖';
+            renderPictures(); renderPreview(); if (!autoSaveDraft()) errors.push('素材已在倉庫，但貼文暫存失敗。請保留此頁並下載備份。');
+          } catch (error) { if (contextVersion !== postContextVersion) return; errors.push(error.message); }
+        }
+        if (contextVersion === postContextVersion) status.textContent = [added ? `已加入 ${added} 個素材。圖片點縮圖可換主圖；影片請選「影片」。` : '', ...errors].filter(Boolean).join('\n');
+      } finally { mediaProcessing = false; button.disabled = false; refreshWarehouseUsage().catch(() => {}); }
+    }
+    // 綁定這篇的圖
+    document.getElementById('upload-pictures').addEventListener('click', () => document.getElementById('picture-input').click());
+    document.getElementById('picture-input').addEventListener('change', event => {
+      const files = Array.from(event.target.files || []); event.target.value = '';
+      if (files.length) uploadPostPictures(files);
+    });
+    window.addEventListener('storage', () => updatePictureStorage());
+
+    // AI 生圖：只使用第一組 OpenRouter 金鑰。
+    function imageAspectRatio(platform) {
+      const [width, height] = PIC_SIZE[platform];
+      const gcd = (a, b) => b ? gcd(b, a % b) : a;
+      const divisor = gcd(width, height);
+      return `${width / divisor}:${height / divisor}`;
+    }
+    function imageGenerationError(code) {
+      return ({ 400: '這個模型不接受這個要求，換一個生圖模型試試', 401: '金鑰不對', 402: '全班的額度用完了', 404: '生圖模型名稱打錯了', 429: '太多人同時在用', 502: '這張沒畫完（沒有扣錢），再按一次' })[code] || '生圖暫時失敗，請稍後再試或先用 📤 上傳。';
+    }
+    function renderImageUsage(lastCost) {
+      const usage = readAIUsage();
+      const images = usage.images || { count: 0, cost: 0, unknownCosts: 0 };
+      document.getElementById('image-usage').textContent = `畫圖：${lastCost === undefined ? '' : lastCost === null ? '這張費用未回報｜' : `這張約 $${money(lastCost)}｜`}今天生了 ${images.count} 張 約 $${money(images.cost)}${images.unknownCosts ? `（${images.unknownCosts} 張費用未回報）` : ''}${usageStorageFailed ? '｜用量未能保存，重新開啟後可能遺失。' : ''}`;
+    }
+    function imageDataToFile(dataUrl) {
+      try {
+        const [header, encoded] = dataUrl.split(',');
+        const binary = atob(encoded);
+        const bytes = Uint8Array.from(binary, char => char.charCodeAt(0));
+        return new File([bytes], `AI-${Date.now()}.png`, { type: header.slice(5, header.indexOf(';')) });
+      } catch (_) { throw new Error('圖片資料無法讀取，請再試一次或先用 📤 上傳。'); }
+    }
+    async function requestGeneratedImage(prompt, platform, config) {
+      const controller = new AbortController();
+      const timer = setTimeout(() => controller.abort(), 120000);
+      try {
+        const response = await fetch('https://openrouter.ai/api/v1/images', {
+          method: 'POST', headers: { Authorization: `Bearer ${config.apiKey}`, 'Content-Type': 'application/json' },
+          body: JSON.stringify({ model: config.customImageModel || config.imageModel || 'bytedance-seed/seedream-5-0-flash', prompt, aspect_ratio: imageAspectRatio(platform), resolution: '1K', n: 1 }), signal: controller.signal
+        });
+        if (!response.ok) throw new Error(imageGenerationError(response.status));
+        let data;
+        try { data = await response.json(); }
+        catch (error) { if (error.name === 'AbortError') throw error; throw new Error('回覆格式不完整，沒有取得圖片。請再試一次或先用 📤 上傳。'); }
+        if (data?.error) throw new Error(imageGenerationError(data.error.code));
+        const image = data?.data?.[0];
+        if (typeof image?.b64_json !== 'string' || !image.b64_json.trim()) throw new Error('AI 沒有傳回圖片，請再試一次或先用 📤 上傳。');
+        const cost = typeof data?.usage?.cost === 'number' && Number.isFinite(data.usage.cost) && data.usage.cost >= 0 ? data.usage.cost : null;
+        // 生成成功就記帳，即使後續壓縮、存檔失敗或已切換貼文。
+        const usage = readAIUsage();
+        usage.images ||= { count: 0, cost: 0, unknownCosts: 0 };
+        usage.images.count++;
+        if (cost === null) usage.images.unknownCosts++;
+        else usage.images.cost += cost;
+        saveAIUsage(usage); renderImageUsage(cost);
+        const mediaType = image.media_type || 'image/png';
+        if (!/^image\/(png|jpeg|webp|gif|avif)$/i.test(mediaType) || !/^[A-Za-z0-9+/=\s]+$/.test(image.b64_json)) throw new Error('圖片格式無法讀取，請換一個生圖模型或先用 📤 上傳。');
+        return `data:${mediaType};base64,${image.b64_json.replace(/\s/g, '')}`;
+      } catch (error) {
+        if (error.name === 'AbortError') throw new Error('等太久');
+        if (error instanceof TypeError) throw new Error('連不到');
+        throw error;
+      } finally { clearTimeout(timer); }
+    }
+    function syncImageButtons() {
+      const busy = imageGenerating || aiBusy || mediaProcessing;
+      document.getElementById('generate-image').disabled = busy;
+      document.getElementById('plan-image').disabled = busy;
+    }
+    async function addGeneratedPicture(dataUrl, contextVersion) {
+      if (contextVersion !== postContextVersion) return { skipped: true };
+      const pic = await compressPicture(imageDataToFile(dataUrl));
+      if (contextVersion !== postContextVersion) return { skipped: true };
+      await writeMediaRecord({ id: pic.id, name: pic.name, dataUrl: pic.dataUrl });
+      if (contextVersion !== postContextVersion) return { skipped: true };
+      pictures.push(pic); mainPictureId = pic.id; formatSelect.value = '單圖';
+      renderPictures(); renderPreview();
+      return { saved: autoSaveDraft(), skipped: false };
+    }
+    async function generatePostImage() {
+      if (imageGenerating || aiBusy || mediaProcessing || deliveryBusy) return;
+      const button = document.getElementById('generate-image');
+      const status = document.getElementById('image-status');
+      status.textContent = ''; status.classList.toggle('image-error', false);
+      if (!settings.apiKey?.trim()) {
+        status.textContent = '生圖要用第一組 OpenRouter 的金鑰（Gemini 的免費金鑰不能生圖）。先用 📤 上傳。';
+        status.classList.toggle('image-error', true); return;
+      }
+      const prompt = document.getElementById('image-prompt').value.trim();
+      if (!prompt) { status.textContent = '請先填「圖片描述（要畫什麼）」。'; status.classList.toggle('image-error', true); return; }
+      const contextVersion = postContextVersion;
+      const platform = currentPlatform;
+      const config = { ...settings };
+      imageGenerating = true; syncImageButtons(); button.textContent = '🎨 畫圖中…'; status.textContent = '正在畫圖，請稍候…';
+      try {
+        const dataUrl = await requestGeneratedImage(prompt, platform, config);
+        const { saved, skipped } = await addGeneratedPicture(dataUrl, contextVersion);
+        if (skipped) { status.textContent = '已切換貼文，生成結果沒有加入目前這篇；費用已記錄。'; return; }
+        status.textContent = saved === false ? '圖片已生成並設為主圖，但剛剛的沒有存到。請保留此頁，釋出儲存空間後再存檔。' : '圖片已加入這篇並設為主圖。';
+        status.classList.toggle('image-error', saved === false);
+      } catch (error) { status.textContent = error.message || '生圖失敗，先用 📤 上傳。'; status.classList.toggle('image-error', true); }
+      finally { imageGenerating = false; syncImageButtons(); button.textContent = '🎨 生圖'; refreshWarehouseUsage().catch(() => {}); }
+    }
+    // 綁定 AI 生圖
+    document.getElementById('generate-image').addEventListener('click', generatePostImage);
+    document.getElementById('image-prompt').addEventListener('input', () => autoSaveDraft());
+
+    // AI 想圖再畫：共用文字 AI 的備援，再接同一個生圖與素材保存流程。
+    function imagePlanFingerprint() {
+      return JSON.stringify({ draft: capturePost(), spec: settings.imageSpec, brand: settings.brandSpec, imageModel: settings.customImageModel || settings.imageModel });
+    }
+    function renderImagePlanUsage(response) {
+      document.getElementById('image-plan-usage').textContent = `想圖：這次用 ${response.provider}：${response.tokens == null ? 'tokens 未回報' : `${response.tokens} tokens`} ${response.cost == null ? '費用未回報' : `約 $${money(response.cost)}`}`;
+    }
+    async function planPostImage() {
+      if (imageGenerating || aiBusy || mediaProcessing || deliveryBusy) return;
+      const status = document.getElementById('image-status');
+      const button = document.getElementById('plan-image');
+      const promptInput = document.getElementById('image-prompt');
+      status.textContent = ''; status.classList.toggle('image-error', false);
+      if (!editor.value.trim()) { status.textContent = '先讓 AI 寫貼文'; return; }
+      if (!settings.imageSpec?.trim()) { status.textContent = '請先到 ⚙ 設定貼上「圖片規格」並儲存。'; return; }
+      if (!settings.apiKey?.trim()) { status.textContent = '生圖要用第一組 OpenRouter 的金鑰。請先到 ⚙ 設定填好；也可以先用 📤 上傳。'; status.classList.toggle('image-error', true); return; }
+      const platform = currentPlatform, contextVersion = postContextVersion, config = { ...settings };
+      const fingerprint = imagePlanFingerprint();
+      const messages = [
+        { role: 'system', content: `你是 ${BRAND.name} 的美術指導。使用者會給你一篇社群貼文，請你寫一段給 AI 畫圖用的畫面描述。只描述畫面：主角、場景、構圖、光線、顏色、氣氛，要具體到看得到。照圖片規格寫。畫面裡不要有任何文字、字母、數字、標誌。不要畫名人，不要畫別的品牌的 logo。素材卡和貼文裡沒有的東西，不要自己加進畫面。一律用台灣的繁體中文。只回一段 80～150 字的畫面描述，不要標題、不要解釋。` },
+        { role: 'user', content: `圖片規格：\n${config.imageSpec}\n\n素材卡：\n${assembleMaterialCard()}\n\n目前平台：${platform}\n貼文：\n${editor.value}\n\n圖片比例：${imageAspectRatio(platform)}` }
+      ];
+      let stage = '想圖', warning = '';
+      imageGenerating = true; setAIWorking(true); syncImageButtons();
+      button.textContent = '🪄 1/2 想圖中…'; status.textContent = '1/2 正在讀貼文、依圖片規格想畫面…';
+      document.getElementById('image-plan-usage').textContent = ''; renderImageUsage();
+      try {
+        const response = await askAI(messages, 'imagePlan');
+        renderImagePlanUsage(response); warning = response.warning || '';
+        if (contextVersion !== postContextVersion || fingerprint !== imagePlanFingerprint()) {
+          status.textContent = [warning, '等待時內容、平台或圖片規格已變更，這次沒有覆蓋描述，也沒有開始生圖。請確認後重新按一次。'].filter(Boolean).join('\n'); return;
+        }
+        const description = response.content?.trim();
+        if (!description) throw new Error('AI 沒有傳回畫面描述，尚未開始生圖。');
+        promptInput.value = description;
+        if (autoSaveDraft() === false) throw new Error('圖片描述沒有存到，尚未開始生圖。請保留此頁並先下載備份。');
+        if (/^回覆可能被切掉了/m.test(warning)) throw new Error('回覆可能不完整，描述已保留。請修改確認後按「🎨 生圖」。');
+        stage = '畫圖'; button.textContent = '🪄 2/2 畫圖中…';
+        status.textContent = [warning, '2/2 描述已保留，正在畫圖…'].filter(Boolean).join('\n');
+        const dataUrl = await requestGeneratedImage(`${description}\n（畫面中不要出現任何文字、字母、數字或標誌。）`, platform, config);
+        const result = await addGeneratedPicture(dataUrl, contextVersion);
+        if (result.skipped) { status.textContent = '已切換貼文，生成結果沒有加入目前這篇；費用已記錄。'; return; }
+        status.textContent = [warning, result.saved === false ? '圖片已生成並設為主圖，但貼文沒有存到。請保留此頁並下載備份。' : '想圖與畫圖完成，圖片已加入並設為主圖。描述已保留，可修改後按「🎨 生圖」。'].filter(Boolean).join('\n');
+        status.classList.toggle('image-error', result.saved === false);
+      } catch (error) {
+        status.textContent = [warning, `${stage}失敗：${error.message || '請稍後再試'}${stage === '畫圖' ? '。描述已保留，可修改後按「🎨 生圖」，不用重新想圖。' : ''}`].filter(Boolean).join('\n');
+        status.classList.toggle('image-error', true);
+      } finally {
+        imageGenerating = false; setAIWorking(false); syncImageButtons(); button.textContent = '🪄 AI 想圖再畫'; refreshWarehouseUsage().catch(() => {});
+      }
+    }
+    // 綁定想圖再畫
+    document.getElementById('plan-image').addEventListener('click', planPostImage);
+
     function avatar() { return node('div', 'avatar', 'C'); }
 
     function socialHead(subtitle) {
@@ -551,7 +1420,7 @@
 
       if (currentPlatform === 'IG') {
         phone.append(socialHead(BRAND.account));
-        const picture = mediaFrame('');
+        const picture = mainPictureFrame('IG') || mediaFrame('');
         if (picture) phone.append(picture);
         else {
           const placeholder = node('div', 'mock-image');
@@ -577,17 +1446,23 @@
           body.append(more);
         }
         phone.append(body);
-        phone.append(mediaFrame('fb-media') || node('div', 'fb-image', topic));
+        phone.append(mainPictureFrame('FB') || mediaFrame('fb-media') || node('div', 'fb-image', topic));
         phone.append(node('div', 'fb-actions', '讚　　　　留言　　　　分享'));
       } else if (currentPlatform === 'LINE') {
         phone.append(socialHead('官方帳號尚未建立'));
         const screen = node('div', 'line-screen');
         screen.append(node('div', 'line-date', '課堂預覽'));
+        const mainImage = mainPictureFrame('LINE');
+        if (mainImage) {
+          const imageRow = node('div', 'line-row line-picture-row');
+          const imageBubble = node('div', 'line-picture-bubble');
+          imageBubble.append(mainImage); imageRow.append(avatar(), imageBubble); screen.append(imageRow);
+        }
         const row = node('div', 'line-row');
         row.append(avatar());
         const bubble = node('div', 'line-bubble');
         bubble.append(previewCopy());
-        const lineMedia = mediaFrame('');
+        const lineMedia = mainImage ? null : mediaFrame('');
         if (lineMedia) bubble.append(lineMedia);
         row.append(bubble);
         row.append(node('span', 'line-time', '預覽 ' + new Date().toLocaleTimeString('zh-TW', { hour: '2-digit', minute: '2-digit', hour12: false })));
@@ -599,7 +1474,7 @@
         const content = node('div', 'threads-content');
         content.append(node('div', 'threads-user', BRAND.name + ' · 帳號待確認'));
         content.append(previewCopy());
-        const threadsMedia = mediaFrame('');
+        const threadsMedia = mainPictureFrame('Threads') || mediaFrame('');
         if (threadsMedia) content.append(threadsMedia);
         content.append(node('div', 'threads-actions', '♡ ◯ ↗'));
         post.append(content);
@@ -698,8 +1573,8 @@
           if (url) URL.revokeObjectURL(url);
           mediaUrls.delete(item.id);
           mediaSlide = Math.min(mediaSlide, Math.max(0, mediaItems.length - 1));
-          if (!mediaItems.length) formatSelect.value = '純文字';
-          renderMediaStrip(); renderPreview(); autoSaveDraft();
+          if (!mediaItems.length) formatSelect.value = pictures.length ? '單圖' : '純文字';
+          renderMediaStrip(); renderPreview(); if (autoSaveDraft()) pruneMediaFiles().catch(() => {});
         });
         controls.append(left, right, remove);
         card.append(info, controls);
@@ -727,40 +1602,6 @@
       mediaStatus.textContent = missing ? `${missing} 個素材無法從此瀏覽器讀取；原貼文文字仍保留。` : '';
     }
 
-    document.getElementById('media-input').addEventListener('change', async event => {
-      const files = Array.from(event.target.files || []);
-      event.target.value = '';
-      if (!files.length) return;
-      const selectionVersion = mediaLoadVersion;
-      const database = await mediaDbPromise;
-      if (selectionVersion !== mediaLoadVersion) return;
-      if (!database) {
-        mediaStatus.textContent = '此瀏覽器無法保存照片或影片，請改用支援本機儲存的瀏覽器。';
-        return;
-      }
-      let added = 0;
-      for (const file of files) {
-        if (!file.type.startsWith('image/') && !file.type.startsWith('video/')) continue;
-        const item = { id: globalThis.crypto?.randomUUID?.() || `${Date.now()}-${Math.random()}`, name: file.name, type: file.type, size: file.size };
-        try {
-          await storeMediaFile(item, file);
-          if (selectionVersion !== mediaLoadVersion) return;
-          mediaItems.push(item);
-          mediaUrls.set(item.id, URL.createObjectURL(file));
-          added++;
-        } catch (_) {
-          mediaStatus.textContent = `「${file.name}」無法保存；請檢查瀏覽器儲存空間。`;
-        }
-      }
-      if (added) {
-        formatSelect.value = mediaItems.length > 1 ? '輪播' : mediaItems[0].type.startsWith('video/') ? '影片' : '單圖';
-        mediaSlide = 0;
-        renderMediaStrip(); renderPreview(); autoSaveDraft();
-        mediaStatus.textContent = `已加入 ${added} 個素材，請確認順序與右側預覽。`;
-      } else if (!mediaStatus.textContent) {
-        mediaStatus.textContent = '沒有可加入的照片或影片。';
-      }
-    });
     formatSelect.addEventListener('change', () => { mediaSlide = 0; renderPreview(); autoSaveDraft(); });
 
     const SETTINGS_KEY = 'courtmate-day6-settings-v1';
@@ -771,15 +1612,15 @@
     const checklistInput = document.getElementById('checklist');
     const promptOutput = document.getElementById('prompt-output');
     const promptError = document.getElementById('prompt-error');
-    const AI_SETTING_FIELDS = { model: 'or-model', customModel: 'custom-model', thinking: 'thinking', geminiKey: 'gemini-key', geminiModel: 'gemini-model', providerMode: 'provider-mode' };
-    const DEFAULT_SETTINGS = { brandSpec: '', checklist: '', apiKey: '', model: OPENROUTER_MODEL, customModel: '', thinking: 'low', geminiKey: '', geminiModel: 'gemini-3.8-flash', providerMode: 'auto' };
+    const AI_SETTING_FIELDS = { model: 'or-model', customModel: 'custom-model', thinking: 'thinking', geminiKey: 'gemini-key', geminiModel: 'gemini-model', providerMode: 'provider-mode', imageSpec: 'image-spec', imageModel: 'image-model', customImageModel: 'custom-image-model' };
+    const DEFAULT_SETTINGS = { brandSpec: '', checklist: '', apiKey: '', model: OPENROUTER_MODEL, customModel: '', thinking: 'low', geminiKey: '', geminiModel: 'gemini-3.8-flash', providerMode: 'auto', imageSpec: '', imageModel: 'bytedance-seed/seedream-5-0-flash', customImageModel: '' };
     function normalizeSettings(saved) {
       const result = { ...DEFAULT_SETTINGS };
       if (!saved || typeof saved !== 'object') return result;
       Object.keys(result).forEach(key => { if (typeof saved[key] === 'string') result[key] = saved[key]; });
       if (!['auto', 'gemini', 'openrouter'].includes(result.providerMode)) result.providerMode = 'auto';
       if (!['low', 'medium', 'high'].includes(result.thinking)) result.thinking = 'low';
-      for (const key of ['model', 'geminiModel']) {
+      for (const key of ['model', 'geminiModel', 'imageModel']) {
         if (![...document.getElementById(AI_SETTING_FIELDS[key]).options].some(option => option.value === result[key])) result[key] = DEFAULT_SETTINGS[key];
       }
       return result;
@@ -807,6 +1648,7 @@
       try {
         localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings));
         status.textContent = '設定已儲存在這個瀏覽器。';
+        updatePictureStorage();
       } catch (_) {
         status.textContent = '此瀏覽器無法保存設定；本次仍可組指令，重新開啟後需再貼一次。';
       }
@@ -922,13 +1764,14 @@
       return { sections, platforms };
     }
     const AI_USAGE_KEY = 'courtmate-day7-ai-usage-v1';
+    const AI_TASKS = { write: { label: '寫文', maxTokens: 8000 }, edit: { label: '小幫手改文', maxTokens: 4000 }, check: { label: '檢查', maxTokens: 6000 }, revise: { label: '修改建議', maxTokens: 6000 }, imagePlan: { label: '想圖', maxTokens: 2000 } };
     let usageStorageFailed = false;
     function usageDay() {
       const now = new Date();
       return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
     }
     function emptyUsage() {
-      return { day: usageDay(), openrouter: { calls: 0, cost: 0, unknownCosts: 0 }, gemini: { calls: 0 } };
+      return { day: usageDay(), openrouter: { calls: 0, cost: 0, unknownCosts: 0 }, gemini: { calls: 0 }, images: { count: 0, cost: 0, unknownCosts: 0 } };
     }
     let memoryUsage = emptyUsage();
     function readAIUsage() {
@@ -939,7 +1782,7 @@
       try {
         const saved = JSON.parse(localStorage.getItem(AI_USAGE_KEY) || 'null');
         if (saved && saved.day === usageDay() && saved.openrouter && saved.gemini) {
-          memoryUsage = { day: saved.day, openrouter: { calls: Math.max(0, Number(saved.openrouter.calls) || 0), cost: Math.max(0, Number(saved.openrouter.cost) || 0), unknownCosts: Math.max(0, Number(saved.openrouter.unknownCosts) || 0) }, gemini: { calls: Math.max(0, Number(saved.gemini.calls) || 0) } };
+          memoryUsage = { day: saved.day, openrouter: { calls: Math.max(0, Number(saved.openrouter.calls) || 0), cost: Math.max(0, Number(saved.openrouter.cost) || 0), unknownCosts: Math.max(0, Number(saved.openrouter.unknownCosts) || 0) }, gemini: { calls: Math.max(0, Number(saved.gemini.calls) || 0) }, images: { count: Math.max(0, Number(saved.images?.count) || 0), cost: Math.max(0, Number(saved.images?.cost) || 0), unknownCosts: Math.max(0, Number(saved.images?.unknownCosts) || 0) } };
         } else if (memoryUsage.day !== usageDay() || saved) memoryUsage = emptyUsage();
       } catch (_) { if (memoryUsage.day !== usageDay()) memoryUsage = emptyUsage(); }
       return memoryUsage;
@@ -948,6 +1791,7 @@
       memoryUsage = usage;
       try { localStorage.setItem(AI_USAGE_KEY, JSON.stringify(usage)); }
       catch (_) { usageStorageFailed = true; }
+      updatePictureStorage();
     }
     function money(value) { return Number(value.toFixed(6)).toString(); }
     function renderAIUsage(last) {
@@ -960,7 +1804,8 @@
       if (code === 400 && /api[\s_-]*key/i.test(detail || '')) return '金鑰不對';
       return ({ 401: '金鑰不對', 403: '沒有權限', 404: '模型名稱不對，或免費版不能用', 429: '免費額度用完了' })[code] || '要求格式不對或 AI 暫時無法回覆，請稍後再試';
     }
-    async function callAIProvider(provider, messages, config) {
+    async function callAIProvider(provider, messages, config, task = 'write') {
+      const profile = AI_TASKS[task] || AI_TASKS.write;
       const isOpenRouter = provider === 'OpenRouter';
       const apiKey = isOpenRouter ? config.apiKey : config.geminiKey;
       if (!apiKey) throw new Error('還沒填金鑰');
@@ -972,7 +1817,7 @@
       if (isOpenRouter) usage.openrouter.unknownCosts++;
       saveAIUsage(usage);
       const body = { model: isOpenRouter ? config.customModel || config.model || OPENROUTER_MODEL : config.geminiModel, messages };
-      if (isOpenRouter) Object.assign(body, { max_tokens: 4000, reasoning: { effort: config.thinking || 'low', exclude: true }, usage: { include: true } });
+      if (isOpenRouter) Object.assign(body, { max_tokens: profile.maxTokens, reasoning: { effort: task === 'check' ? config.thinking || 'low' : 'low', exclude: true }, usage: { include: true } });
       try {
         const response = await fetch(isOpenRouter ? 'https://openrouter.ai/api/v1/chat/completions' : 'https://generativelanguage.googleapis.com/v1beta/openai/chat/completions', {
           method: 'POST', headers: { Authorization: `Bearer ${apiKey}`, 'Content-Type': 'application/json' }, body: JSON.stringify(body), signal: controller.signal
@@ -998,16 +1843,16 @@
         if (!response.ok || data?.error) throw new Error(providerError(provider, data?.error?.code || response.status, data?.error?.message));
         const content = typeof data?.choices?.[0]?.message?.content === 'string' ? data.choices[0].message.content.replace(/<think>[\s\S]*?(?:<\/think>|$)/gi, '').trim() : '';
         const truncated = data?.choices?.[0]?.finish_reason === 'length';
-        if (!content) throw new Error(truncated ? '想太久，字數用完了（⚙ 設定把思考調成少想一點）' : 'AI 沒有傳回文字，請重試或改用 🧩 組好指令');
-        return { content, provider, tokens, cost, warning: truncated ? '回覆可能被切掉了' : '' };
+        if (!content) throw new Error(truncated ? `${profile.label}輸出額度已用完，沒有產出正文（模型：${body.model}${isOpenRouter ? `；上限 ${profile.maxTokens} tokens` : ''}）。請縮短要求或換模型後再試。` : `模型 ${body.model} 沒有傳回正文。請重試或改用 🧩 組好指令。`);
+        return { content, provider, tokens, cost, warning: truncated ? `回覆可能被切掉了（模型：${body.model}；${profile.label}額度已用完）。請確認內容完整後再採用。` : '' };
       } catch (error) {
-        if (error.name === 'AbortError') throw new Error('等太久');
+        if (error.name === 'AbortError') throw new Error(`等太久（模型：${body.model}；60 秒內未完成回覆）。請稍後重試或換模型。`);
         if (error instanceof TypeError) throw new Error('連不到（檢查網路）');
         throw error;
       } finally { clearTimeout(timer); }
     }
     // 寫文、小幫手及檢查官共用此入口，各自提供 messages 即可。
-    async function askAI(messages) {
+    async function askAI(messages, task = 'write') {
       const config = { ...settings };
       if (!config.apiKey && !config.geminiKey) throw new Error('還沒填金鑰。按 ⚙ 設定。');
       const providers = config.providerMode === 'gemini' ? ['Gemini'] : config.providerMode === 'openrouter' ? ['OpenRouter'] : config.apiKey ? ['OpenRouter', ...(config.geminiKey ? ['Gemini'] : [])] : ['Gemini'];
@@ -1015,7 +1860,7 @@
       try {
         for (const provider of providers) {
           try {
-            const result = await callAIProvider(provider, messages, config);
+            const result = await callAIProvider(provider, messages, config, task);
             if (errors.length) result.warning = [`⚠️ ${errors.join('；')}。這次改用 ${provider}。`, result.warning].filter(Boolean).join('\n');
             renderAIUsage(result);
             return result;
@@ -1048,7 +1893,7 @@
       button.textContent = '✨ AI 寫作中…';
       status.textContent = 'AI 寫作中…';
       try {
-        const response = await askAI([{ role: 'user', content: assemblePrompt() }]);
+        const response = await askAI([{ role: 'user', content: assemblePrompt() }], 'write');
         if (postContextVersion !== contextVersion) return;
         raw.value = response.content;
         const result = parsePlatformReply(response.content);
@@ -1115,6 +1960,7 @@
     }
     function setAIWorking(busy) {
       aiBusy = busy;
+      syncImageButtons();
       document.getElementById('generate-ai').disabled = busy;
       document.getElementById('assistant-send').disabled = busy;
       document.getElementById('check-ai').disabled = busy;
@@ -1144,7 +1990,7 @@
       setAIWorking(true);
       status.textContent = '小幫手修改中…';
       try {
-        const response = await askAI(messages);
+        const response = await askAI(messages, 'edit');
         if (postContextVersion !== contextVersion) return;
         if (JSON.stringify(capturePost()) !== originalDraft) {
           raw.value = response.content;
@@ -1225,7 +2071,7 @@
       button.textContent = '🔍 檢查中…';
       status.textContent = '檢查官正在逐項檢查…';
       try {
-        const response = await askAI(messages);
+        const response = await askAI(messages, 'check');
         if (postContextVersion !== contextVersion) { status.textContent = '已切換貼文，這次報告未開啟。請重新檢查目前這篇。'; return; }
         renderCheckReport(response.content);
         const changed = checkerFingerprint() !== fingerprint;
@@ -1356,7 +2202,7 @@
       ];
       setAIWorking(true); button.textContent = '正在產生修改建議…'; status.textContent = '正在整理原句與建議句，貼文尚未修改。';
       try {
-        const response = await askAI(messages);
+        const response = await askAI(messages, 'revise');
         if (lastCheckReport !== report || !reviewMatchesCurrent(report)) { status.textContent = '等待時內容已變更，沒有改動貼文。請重新檢查。'; raw.value = response.content; raw.hidden = false; return; }
         try { report.suggestions = parseFixSuggestions(response.content, report); }
         catch (error) { status.textContent = error.message + ' 下方保留回覆供核對。'; raw.value = response.content; raw.hidden = false; return; }
@@ -1415,10 +2261,14 @@
     });
     const POSTS_KEY = 'courtmate-day6-posts-v1';
     const DRAFT_KEY = 'courtmate-day6-draft-v1';
+    const WORKSPACE_KEY = 'courtmate-studio-workspace-v2';
+    let storageReady = false;
+    let workspaceRevision = Number(readStored(WORKSPACE_KEY, null)?.revision) || 0;
+    let deliveryBusy = false;
     const POST_STATES = ['草稿', '等確認', '完成'];
     const storageStatus = document.getElementById('storage-status');
     const postsDialog = document.getElementById('posts-dialog');
-    let savedPosts = readStored(POSTS_KEY, []);
+    let savedPosts = readStored(WORKSPACE_KEY, null)?.posts || readStored(POSTS_KEY, []);
     if (!Array.isArray(savedPosts)) savedPosts = [];
     let currentSavedId = null;
 
@@ -1432,9 +2282,11 @@
     function writeStored(key, value) {
       try {
         localStorage.setItem(key, JSON.stringify(value));
+        updatePictureStorage(true);
         return true;
       } catch (_) {
-        storageStatus.textContent = '此瀏覽器無法保存資料。請先複製貼文文字，再檢查瀏覽器的儲存設定。';
+        updatePictureStorage(false);
+        storageStatus.textContent = '這次沒有存到。請保留此頁，按「備份與還原」下載備份，再檢查儲存空間。';
         return false;
       }
     }
@@ -1446,6 +2298,10 @@
         card: Object.fromEntries(FIELDS.map(field => [field.id, document.getElementById(field.id).value])),
         type: document.getElementById('post-type').value,
         format: formatSelect.value,
+        pictures: pictureReferences({ pictures }),
+        mainPictureId,
+        cardExportSize: document.getElementById('card-export-size').value,
+        imagePrompt: document.getElementById('image-prompt').value,
         media: mediaItems.map(({ id, name, type, size }) => ({ id, name, type, size })),
         status: savedPosts.find(item => item.id === currentSavedId)?.status || '草稿',
         posts: Object.fromEntries(PLATFORMS.map(platform => [platform, posts[platform]])),
@@ -1482,6 +2338,15 @@
       FIELDS.forEach(field => { document.getElementById(field.id).value = item.card?.[field.id] || ''; });
       document.getElementById('post-type').value = POST_TYPES.includes(item.type) ? item.type : POST_TYPES[0];
       PLATFORMS.forEach(platform => { posts[platform] = item.posts?.[platform] || ''; });
+      document.getElementById('card-export-size').value = Object.hasOwn(SIZES, item.cardExportSize) ? item.cardExportSize : 'platform';
+      editingPictureId = null;
+      restorePictures(item);
+      pictureSlide = 0;
+      pictureHydration = hydratePictures();
+      document.getElementById('image-prompt').value = typeof item.imagePrompt === 'string' ? item.imagePrompt : '';
+      document.getElementById('image-status').textContent = '';
+      document.getElementById('image-plan-usage').textContent = '';
+      document.getElementById('picture-status').textContent = '';
       clearMediaUrls();
       mediaItems = Array.isArray(item.media) ? item.media.filter(media => media && typeof media.id === 'string' && typeof media.type === 'string') : [];
       mediaSlide = 0;
@@ -1493,7 +2358,15 @@
     }
 
     function autoSaveDraft() {
-      writeStored(DRAFT_KEY, capturePost());
+      if (!storageReady) return false;
+      const item = capturePost();
+      if (hasContent()) item.id ||= newStudioId();
+      const next = item.id ? upsertWorkingPost(savedPosts, item) : savedPosts;
+      const saved = saveWorkspace(next, item);
+      if (saved) { savedPosts = next; currentSavedId = item.id; }
+      storageStatus.classList.toggle('storage-error', !saved);
+      if (saved) storageStatus.textContent = item.id ? '已自動暫存於這個瀏覽器，並保存在「我的貼文」。' : '已準備好新的一篇。';
+      return saved;
     }
 
     function postName(item) {
@@ -1508,16 +2381,8 @@
         document.getElementById('topic').focus();
         return;
       }
-      item.id ||= (globalThis.crypto?.randomUUID?.() || `${Date.now()}-${Math.random()}`);
-      item.name = postName(item);
-      item.savedAt = new Date().toISOString();
-      const next = savedPosts.filter(saved => saved.id !== item.id);
-      next.unshift(item);
-      if (!writeStored(POSTS_KEY, next)) return;
-      savedPosts = next;
-      currentSavedId = item.id;
-      autoSaveDraft();
-      storageStatus.textContent = `已存檔：${item.name}`;
+      const draftSaved = autoSaveDraft();
+      if (draftSaved) storageStatus.textContent = `已存檔：${postName(item)}`;
     });
 
     function renderSavedPosts() {
@@ -1540,7 +2405,9 @@
         stateSelect.value = state;
         stateSelect.addEventListener('change', () => {
           const next = savedPosts.map(saved => saved.id === item.id ? { ...saved, status: stateSelect.value } : saved);
-          if (!writeStored(POSTS_KEY, next)) { stateSelect.value = state; return; }
+          const draft = capturePost();
+          if (draft.id === item.id) draft.status = stateSelect.value;
+          if (!saveWorkspace(next, draft)) { stateSelect.value = state; return; }
           savedPosts = next;
           document.getElementById('posts-status').textContent = `「${item.name}」已移到${stateSelect.value}。`;
           renderSavedPosts();
@@ -1548,10 +2415,9 @@
         const open = node('button', 'secondary-action', '打開');
         open.type = 'button';
         open.addEventListener('click', () => {
-          if (hasContent() && !confirm('目前畫面上的內容會被這篇貼文取代。確定要打開嗎？')) return;
+          if (hasContent() && !autoSaveDraft()) return;
           applyPost(item);
-          autoSaveDraft();
-          storageStatus.textContent = `已打開：${item.name}`;
+          if (autoSaveDraft()) storageStatus.textContent = `已打開：${item.name}`;
           postsDialog.close();
         });
         const remove = node('button', 'secondary-action danger-action', '刪除');
@@ -1559,14 +2425,14 @@
         remove.addEventListener('click', () => {
           if (!confirm(`確定刪除「${item.name}」嗎？這個瀏覽器中的存檔會被移除。`)) return;
           const next = savedPosts.filter(saved => saved.id !== item.id);
-          if (!writeStored(POSTS_KEY, next)) return;
+          if (!saveWorkspace(next, currentSavedId === item.id ? { card: {}, posts: {}, pictures: [], media: [], platform: 'IG' } : capturePost())) return;
           savedPosts = next;
           if (currentSavedId === item.id) {
-            currentSavedId = null;
-            autoSaveDraft();
+            applyPost({ card: {}, posts: {}, pictures: [], media: [], platform: 'IG' });
           }
           document.getElementById('posts-status').textContent = `已刪除：${item.name}`;
           renderSavedPosts();
+          pruneMediaFiles().catch(() => {});
         });
         actions.append(open, remove);
         row.append(description, stateSelect, actions);
@@ -1578,7 +2444,7 @@
 
     function hasContent() {
       return FIELDS.some(field => document.getElementById(field.id).value.trim()) ||
-        PLATFORMS.some(platform => posts[platform].trim()) || editor.value.trim() || mediaItems.length > 0;
+        PLATFORMS.some(platform => posts[platform].trim()) || editor.value.trim() || mediaItems.length > 0 || pictures.length > 0 || document.getElementById('image-prompt').value.trim().length > 0;
     }
 
     document.getElementById('open-posts').addEventListener('click', () => {
@@ -1587,17 +2453,246 @@
       postsDialog.showModal();
     });
     document.getElementById('new-post').addEventListener('click', () => {
-      if (hasContent() && !confirm('要清空目前畫面，開始新的一篇嗎？已存檔的貼文仍會保留。')) return;
+      if (hasContent() && !autoSaveDraft()) return;
       applyPost({ card: {}, type: POST_TYPES[0], posts: {}, platform: 'IG' });
-      autoSaveDraft();
-      storageStatus.textContent = '已開始新的一篇。';
+      if (autoSaveDraft()) storageStatus.textContent = '已開始新的一篇，上一篇保留在「我的貼文」。';
     });
 
-    const draft = readStored(DRAFT_KEY, null);
-    if (draft && typeof draft === 'object' && draft.card && draft.posts) {
-      applyPost(draft);
-      storageStatus.textContent = '已恢復上次自動暫存的內容。';
+    function saveWorkspace(collection, draft) {
+      if (!storageReady) return false;
+      const diskRevision = Number(readStored(WORKSPACE_KEY, null)?.revision) || 0;
+      if (diskRevision !== workspaceRevision) {
+        storageStatus.textContent = '另一個分頁已更新貼文，這頁沒有覆蓋。請先下載備份保留目前內容，再重新整理。';
+        storageStatus.classList.add('storage-error'); return false;
+      }
+      const saved = writeStored(WORKSPACE_KEY, { version: 2, revision: workspaceRevision + 1, posts: collection.map(portablePost), draft: draft ? portablePost(draft) : null });
+      if (saved) workspaceRevision++;
+      return saved;
     }
+    function storageValues() {
+      return Object.fromEntries([WORKSPACE_KEY, POSTS_KEY, DRAFT_KEY, SETTINGS_KEY, AI_USAGE_KEY, LIMITS_KEY].map(key => [key, localStorage.getItem(key)]));
+    }
+    async function snapshotRecord(mode, record) {
+      const database = await mediaDbPromise;
+      if (!database) throw new Error('素材倉庫無法開啟，沒有變更原資料。請關閉其他舊工作台分頁後重新整理。');
+      return new Promise((resolve, reject) => {
+        const transaction = database.transaction('snapshots', mode);
+        const request = mode === 'readwrite' ? transaction.objectStore('snapshots').put(record) : transaction.objectStore('snapshots').get(record);
+        let value;
+        request.onsuccess = () => { value = request.result; };
+        transaction.oncomplete = () => resolve(value);
+        transaction.onerror = transaction.onabort = () => reject(new Error('無法保留還原前快照，沒有變更原資料。'));
+      });
+    }
+    function snapshotContents(snapshot) {
+      const parse = key => { try { return JSON.parse(snapshot.values[key] || 'null'); } catch (_) { return null; } };
+      const workspace = parse(WORKSPACE_KEY);
+      return { posts: workspace?.posts || parse(POSTS_KEY) || [], draft: workspace?.draft || parse(DRAFT_KEY), settings: parse(SETTINGS_KEY) || {}, limits: parse(LIMITS_KEY) || {}, usage: parse(AI_USAGE_KEY) || {} };
+    }
+    function setDeliveryBusy(busy) {
+      deliveryBusy = busy;
+      document.querySelector('main').inert = busy || !storageReady;
+      for (const id of ['new-post', 'open-posts', 'open-settings', 'open-backup', 'export-backup', 'download-snapshot', 'backup-input']) document.getElementById(id).disabled = busy;
+      document.getElementById('restore-backup').disabled = busy || !pendingBackup;
+      document.getElementById('restore-config').disabled = busy || !pendingBackup;
+    }
+    async function bootStorage() {
+      setDeliveryBusy(true);
+      storageStatus.textContent = '正在讀取並確認貼文與素材…';
+      try {
+        let workspace = readStored(WORKSPACE_KEY, null);
+        if (!workspace) {
+          const staged = await snapshotRecord('readonly', 'migration-ready');
+          if (staged?.workspace) workspace = staged.workspace;
+        }
+        if (!workspace) {
+          const original = storageValues();
+          await snapshotRecord('readwrite', { id: 'safety', reason: '搬移前', createdAt: new Date().toISOString(), values: original });
+          const migrated = [];
+          for (const item of savedPosts) migrated.push(await migratePostAssets(item));
+          const legacyDraft = readStored(DRAFT_KEY, null);
+          const draft = legacyDraft?.card && legacyDraft?.posts ? await migratePostAssets(legacyDraft) : null;
+          for (const item of [...migrated, ...(draft ? [draft] : [])]) if (item.pictures.length && item.format === '純文字') item.format = '單圖';
+          if (draft && !draft.id) draft.id = newStudioId();
+          workspace = { version: 2, revision: 1, posts: draft ? upsertWorkingPost(migrated, draft) : migrated, draft };
+          // 先在倉庫保留可恢復的新版本，才釋放舊抽屜空間；途中關頁仍可繼續。
+          await snapshotRecord('readwrite', { id: 'migration-ready', workspace });
+          localStorage.removeItem(POSTS_KEY); localStorage.removeItem(DRAFT_KEY);
+        }
+        if (workspace.version !== 2 || !Array.isArray(workspace.posts)) throw new Error('貼文資料格式無法讀取，請保留資料並從備份還原。');
+        localStorage.setItem(WORKSPACE_KEY, JSON.stringify(workspace));
+        await snapshotRecord('readwrite', { id: 'migration-ready', workspace: null });
+        savedPosts = workspace.posts; workspaceRevision = Number(workspace.revision) || 0; storageReady = true;
+        if (workspace.draft?.card && workspace.draft?.posts) { applyPost(workspace.draft); await pictureHydration; }
+        storageStatus.textContent = '貼文與素材已讀取。每篇修改會自動保存在「我的貼文」。';
+      } catch (error) {
+        storageStatus.textContent = `${error.message} 原資料或搬移前快照仍保留。請勿清除瀏覽器資料。`;
+        storageStatus.classList.add('storage-error');
+      } finally { setDeliveryBusy(false); updatePictureStorage(); refreshWarehouseUsage().catch(() => {}); if (storageReady) pruneMediaFiles().catch(() => {}); }
+    }
+    async function pruneMediaFiles() {
+      if (!storageReady || deliveryBusy || imageGenerating || mediaProcessing) return;
+      const protectedIds = new Set();
+      const protect = item => { if (item) for (const asset of [...(item.pictures || []), ...(item.media || [])]) protectedIds.add(asset.id); };
+      savedPosts.forEach(protect); protect(capturePost());
+      const safety = await snapshotRecord('readonly', 'safety');
+      if (safety) { const old = snapshotContents(safety); old.posts.forEach(protect); protect(old.draft); }
+      const staged = await snapshotRecord('readonly', 'migration-ready');
+      if (staged?.workspace) { staged.workspace.posts.forEach(protect); protect(staged.workspace.draft); }
+      if (deliveryBusy || imageGenerating || mediaProcessing) return;
+      const latest = readStored(WORKSPACE_KEY, null);
+      (latest?.posts || []).forEach(protect); protect(latest?.draft); protect(capturePost());
+      const database = await mediaDbPromise;
+      await new Promise((resolve, reject) => {
+        const transaction = database.transaction('files', 'readwrite');
+        const request = transaction.objectStore('files').openCursor();
+        // 新檔先保留一天，避免另一分頁還在寫入引用時被清理。
+        request.onsuccess = () => { const cursor = request.result; if (cursor) { if (!protectedIds.has(cursor.key) && (cursor.value.storedAt || 0) < Date.now() - 86400000) cursor.delete(); cursor.continue(); } };
+        transaction.oncomplete = resolve; transaction.onerror = transaction.onabort = reject;
+      });
+      await refreshWarehouseUsage();
+    }
+    async function refreshWarehouseUsage() {
+      const status = document.getElementById('warehouse-storage');
+      const database = await mediaDbPromise; if (!database) return;
+      const count = await new Promise((resolve, reject) => { const request = database.transaction('files').objectStore('files').count(); request.onsuccess = () => resolve(request.result); request.onerror = reject; });
+      const estimate = await navigator.storage?.estimate?.();
+      status.textContent = `素材倉庫：${count} 個檔案${Number.isFinite(estimate?.usage) ? `｜此網站約用 ${(estimate.usage / 1048576).toFixed(2)} MB（含快照）` : ''}。未使用檔案至少保留一天；快照用到的會繼續保留。`;
+    }
+    function downloadBlob(blob, filename) {
+      const url = URL.createObjectURL(blob), link = document.createElement('a');
+      link.href = url; link.download = filename; document.body.append(link); link.click(); link.remove();
+      setTimeout(() => URL.revokeObjectURL(url), 60000);
+    }
+    function deliveryError(element, error) { element.textContent = error.message || '這次沒有完成，請重試。'; element.classList.add('storage-error'); }
+    function canDeliver(status) {
+      if (deliveryBusy || aiBusy || imageGenerating || mediaProcessing) { status.textContent = '目前有工作進行中，請完成後再備份或還原。'; return false; }
+      return true;
+    }
+    let pendingBackup = null;
+    const backupStatus = document.getElementById('backup-status');
+    document.getElementById('open-backup').addEventListener('click', () => document.getElementById('backup-dialog').showModal());
+    document.getElementById('export-backup').addEventListener('click', async () => {
+      if (!canDeliver(backupStatus)) return;
+      setDeliveryBusy(true); backupStatus.classList.remove('storage-error'); backupStatus.textContent = '正在收集文字與全部素材…';
+      try {
+        await pictureHydration;
+        const draft = capturePost();
+        const assets = await collectBackupAssets(savedPosts, draft);
+        const backup = makeBackup(savedPosts, draft, assets, settings, characterLimits, readAIUsage());
+        downloadBlob(new Blob([JSON.stringify(backup)], { type: 'application/json' }), `CourtMate_完整備份_${new Date().toLocaleDateString('sv-SE')}.json`);
+        backupStatus.textContent = `已準備下載：${backup.posts.length} 篇、${assets.length} 個素材及目前草稿。不含金鑰；請確認下載檔案已保存。`;
+      } catch (error) { deliveryError(backupStatus, error); }
+      finally { setDeliveryBusy(false); }
+    });
+    document.getElementById('backup-input').addEventListener('change', async event => {
+      if (!canDeliver(backupStatus)) return;
+      pendingBackup = null; document.getElementById('restore-backup').disabled = document.getElementById('restore-config').disabled = true;
+      const file = event.target.files?.[0]; if (!file) return;
+      setDeliveryBusy(true);
+      try {
+        pendingBackup = validateBackup(JSON.parse(await file.text()));
+        document.getElementById('restore-summary').textContent = `檔案內有 ${pendingBackup.posts.length} 篇、${pendingBackup.assets.length} 個素材${pendingBackup.draft ? '及目前草稿' : ''}。將另存加入，現有貼文、品牌設定、金鑰與用量均保留。`;
+        backupStatus.textContent = '檔案檢查通過，尚未還原。'; backupStatus.classList.remove('storage-error');
+      } catch (error) { deliveryError(backupStatus, new Error(error instanceof SyntaxError ? '不是可讀取的 JSON 備份檔，沒有變更原資料。' : error.message)); }
+      setDeliveryBusy(false);
+    });
+    document.getElementById('restore-backup').addEventListener('click', async () => {
+      if (!pendingBackup || !canDeliver(backupStatus)) return;
+      setDeliveryBusy(true); backupStatus.textContent = '正在保留現況並還原素材…';
+      try {
+        await pictureHydration;
+        const plan = prepareRestore(pendingBackup, savedPosts, hasContent() ? capturePost() : null);
+        await snapshotRecord('readwrite', { id: 'safety', reason: '還原前', createdAt: new Date().toISOString(), values: storageValues() });
+        for (const asset of plan.assets) await writeMediaRecord(asset.dataUrl.startsWith('data:video/') ? { id: asset.id, name: asset.name, blob: imageDataToFile(asset.dataUrl) } : asset);
+        // 搬移前快照仍可能包含舊圖片入口；還原時一併轉成現在的單一圖片區。
+        const restored = [];
+        for (const post of plan.posts) restored.push(await migratePostAssets(post));
+        plan.posts = restored;
+        if (plan.draft) plan.draft = await migratePostAssets(plan.draft);
+        storageReady = true;
+        if (!saveWorkspace(plan.posts, plan.draft || capturePost())) throw new Error(storageStatus.textContent);
+        savedPosts = plan.posts;
+        if (plan.draft) { applyPost(plan.draft); await pictureHydration; }
+        backupStatus.textContent = `已加入 ${pendingBackup.posts.length} 篇與備份草稿。現有貼文、金鑰、品牌規格與用量均保留；可到「我的貼文」查看。`;
+        backupStatus.classList.remove('storage-error'); storageStatus.textContent = '備份已還原，內容已保存在「我的貼文」。';
+      } catch (error) { deliveryError(backupStatus, error); }
+      finally { setDeliveryBusy(false); updatePictureStorage(); }
+    });
+    document.getElementById('restore-config').addEventListener('click', async () => {
+      if (!pendingBackup || !canDeliver(backupStatus)) return;
+      const preview = Object.entries(pendingBackup.settings).map(([key, value]) => `${key}：${value}`).join('\n\n');
+      if (!confirm(`以下設定將取代目前設定，金鑰維持原樣：\n\n${preview}\n\n確定套用嗎？`)) return;
+      setDeliveryBusy(true);
+      try {
+        await snapshotRecord('readwrite', { id: 'safety', reason: '套用設定前', createdAt: new Date().toISOString(), values: storageValues() });
+        const config = normalizeSettings({ ...settings, ...publicSettings(pendingBackup.settings) });
+        if (!writeStored(SETTINGS_KEY, config)) throw new Error('設定沒有存到，原設定仍保留。');
+        settings = config; backupStatus.textContent = '已套用品牌規格、檢查清單與模型設定；兩組金鑰維持原樣。';
+      } catch (error) { deliveryError(backupStatus, error); }
+      finally { setDeliveryBusy(false); }
+    });
+    document.getElementById('download-snapshot').addEventListener('click', async () => {
+      if (!canDeliver(backupStatus)) return;
+      setDeliveryBusy(true);
+      try {
+        const snapshot = await snapshotRecord('readonly', 'safety');
+        if (!snapshot) throw new Error('尚無搬移／還原前快照。');
+        const old = snapshotContents(snapshot), assets = await collectBackupAssets(old.posts, old.draft);
+        const backup = makeBackup(old.posts, old.draft, assets, old.settings, old.limits, old.usage);
+        downloadBlob(new Blob([JSON.stringify(backup)], { type: 'application/json' }), 'CourtMate_變更前備份.json');
+        backupStatus.textContent = `已準備下載 ${snapshot.reason} 的備份（${new Date(snapshot.createdAt).toLocaleString('zh-TW')}）。不含金鑰。`;
+      } catch (error) { deliveryError(backupStatus, error); }
+      finally { setDeliveryBusy(false); }
+    });
+    document.getElementById('copy-post').addEventListener('click', async () => {
+      const status = document.getElementById('delivery-status'); status.classList.remove('storage-error');
+      if (!editor.value.trim()) { status.textContent = '目前平台沒有文字可以複製。'; return; }
+      try { await navigator.clipboard.writeText(editor.value); status.textContent = `已複製 ${currentPlatform} 完整文字。`; }
+      catch (_) { editor.focus(); editor.select(); status.textContent = document.execCommand('copy') ? `已複製 ${currentPlatform} 完整文字。` : '文字已選取，請按 ⌘C（Windows 按 Ctrl+C）複製。'; }
+    });
+    async function exportCards(all) {
+      if (exportingCards) return;
+      const status = document.getElementById('picture-status'); status.classList.remove('storage-error');
+      exportingCards = true;
+      document.getElementById('download-picture').disabled = document.getElementById('download-cards').disabled = true;
+      try {
+        await pictureHydration;
+        const selected = pictures.find(pic => pic.id === editingPictureId) || pictures.find(pic => pic.id === mainPictureId);
+        const source = all ? orderedCardPictures(pictures, mainPictureId) : selected ? [selected] : [];
+        if (!source.length) throw new Error('請先上傳並選一張圖片。');
+        const snapshot = source.map(pic => ({ ...pic, design: normalizeCardDesign(pic.design) }));
+        const platform = currentPlatform, sizeKey = document.getElementById('card-export-size').value, [width, height] = cardDimensions();
+        const label = sizeKey === 'platform' ? platform : SIZES[sizeKey].label;
+        const files = [];
+        for (let i = 0; i < snapshot.length; i++) {
+          status.textContent = `正在準備第 ${i + 1}／${snapshot.length} 張圖卡…`;
+          const result = await drawCard(snapshot[i], width, height);
+          if (result.overflow) throw new Error(`第 ${i + 1} 張「${snapshot[i].name}」文字放不下。請減少字數或調小字級，這次未下載。`);
+          const blob = await new Promise(resolve => result.canvas.toBlob(resolve, 'image/png'));
+          if (!blob) throw new Error('圖片匯出失敗，這次未下載。');
+          files.push({ name: `${String(i + 1).padStart(2, '0')}_${BRAND.name}_${label}_${width}x${height}.png`, bytes: new Uint8Array(await blob.arrayBuffer()) });
+        }
+        if (all) downloadBlob(new Blob([await makeCardZip(files)], { type: 'application/zip' }), `${BRAND.name}_${label}_輪播圖卡_${width}x${height}.zip`);
+        else downloadBlob(new Blob([files[0].bytes], { type: 'image/png' }), files[0].name.replace(/^01_/, ''));
+        status.textContent = `已準備下載 ${all ? `${files.length} 張圖卡 ZIP（主圖在前）` : '這張圖卡 PNG'}，${width}×${height}。請用手機確認裁切、文字與對比。`;
+      } catch (error) { deliveryError(status, error); }
+      finally { exportingCards = false; document.getElementById('download-picture').disabled = document.getElementById('download-cards').disabled = false; }
+    }
+    document.getElementById('download-picture').addEventListener('click', () => exportCards(false));
+    document.getElementById('download-cards').addEventListener('click', () => exportCards(true));
+    document.getElementById('download-video').addEventListener('click', async () => {
+      const status = document.getElementById('picture-status');
+      try {
+        const item = mediaItems[mediaSlide]; if (!item?.type.startsWith('video/')) throw new Error('目前沒有選中的影片。');
+        const blob = await loadMediaFile(item.id); if (!blob) throw new Error('找不到影片，請從備份還原。');
+        downloadBlob(blob, item.name); status.textContent = '已準備下載原始影片。';
+      } catch (error) { deliveryError(status, error); }
+    });
+    bootStorage();
+    renderPictures();
+    renderImageUsage();
+    updatePictureStorage();
     renderPreview();
     renderAssistant();
   </script>
