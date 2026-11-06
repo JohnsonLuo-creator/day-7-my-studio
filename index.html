@@ -379,6 +379,31 @@
       .picture-thumb > .media-controls { gap: 2px; flex-wrap: nowrap; }
       .picture-thumb .media-controls button { min-width: 44px; min-height: 44px; padding: 5px; }
     }
+
+    [hidden] { display: none !important; }
+    .workflow-nav { max-width: 1440px; margin: 0 auto 20px; padding: 0 24px; display: flex; gap: 8px; }
+    .workflow-nav button { flex: 1; min-height: 48px; padding: 12px; border: 1px solid var(--line); border-radius: 14px; background: var(--surface); color: var(--main-dark); font: inherit; cursor: pointer; }
+    .workflow-nav button[aria-selected="true"] { background: var(--main); color: white; font-weight: 700; }
+    .workflow-workspace { grid-template-columns: minmax(0, 1fr) minmax(320px, 420px); align-items: start; }
+    .workflow-workspace > .preview { position: sticky; top: 16px; }
+    .workflow-workspace .post-pictures { margin: 0; border: 0; }
+    .workflow-workspace .action-row { padding-top: 0; margin-top: 0; border-top: 0; }
+    .workflow-workspace .action-row p:empty { display: none; }
+    .workflow-workspace .action-row .dialog-actions { margin: 8px 0; }
+    .workflow-workspace .action-row #ai-usage { margin: 8px 0; }
+    .workflow-footer { display: flex; justify-content: space-between; gap: 12px; padding: 20px; border-top: 1px solid var(--line); }
+    .workflow-footer button { min-height: 44px; }
+    .workflow-workspace .panel-kicker { display: none; }
+    .workflow-mobile-preview { display: none; }
+    @media(max-width: 999px) {
+      .workflow-workspace { grid-template-columns: 1fr; }
+      .workflow-nav { padding: 0 16px; gap: 4px; }
+      .workflow-nav button { padding: 10px 4px; font-size: 12px; border-radius: 10px; }
+      .workflow-workspace > .preview { position: static; }
+      .workflow-mobile-preview { display: flex; gap: 8px; margin: 0 16px 16px; }
+      .workflow-workspace.mobile-preview > [role="tabpanel"] { display: none; }
+      .workflow-workspace:not(.mobile-preview) > .preview { display: none; }
+    }
   </style>
 </head>
 <body>
@@ -393,9 +418,15 @@
   </header>
   <div class="intro">
     <p>先把想法放進素材卡，再分平台編輯；文字與手機預覽會同步更新。</p>
-    <span class="step">素材卡 → 貼文編輯 → 手機預覽</span>
+    <span class="step">填內容 → 寫文案 → 做圖片 → 檢查與下載</span>
   </div>
-  <main class="workspace">
+  <nav class="workflow-nav" aria-label="製作階段" role="tablist">
+    <button id="workflow-tab-0" type="button" role="tab" aria-controls="workflow-content">① 填內容</button>
+    <button id="workflow-tab-1" type="button" role="tab" aria-controls="workflow-writing">② 寫文案</button>
+    <button id="workflow-tab-2" type="button" role="tab" aria-controls="workflow-pictures">③ 做圖片</button>
+    <button id="workflow-tab-3" type="button" role="tab" aria-controls="workflow-delivery">④ 檢查與下載</button>
+  </nav>
+  <main class="workspace workflow-workspace">
     <section class="panel" aria-labelledby="materials-title">
       <div class="panel-head">
         <p class="panel-kicker">左側 · 素材</p>
@@ -1127,7 +1158,7 @@
     }
     function selectMainPicture(id) {
       if (!pictures.some(pic => pic.id === id)) return;
-      mainPictureId = id; pictureSlide = 0; renderPictures(); renderPreview(); autoSaveDraft();
+      mainPictureId = id; editingPictureId = id; pictureSlide = 0; renderPictures(); renderPreview(); autoSaveDraft();
     }
     function deletePicture(id) {
       pictures = pictures.filter(pic => pic.id !== id);
@@ -1159,6 +1190,13 @@
       if (!pictures.length) host.append(node('p', 'helper', '上傳圖片後，點縮圖選主圖。'));
       refreshCardControls();
     }
+    function selectPreviewPage(delta) {
+      const ordered = orderedCardPictures(pictures, mainPictureId);
+      if (!ordered.length) return;
+      pictureSlide = (pictureSlide + delta + ordered.length) % ordered.length;
+      editingPictureId = ordered[pictureSlide].id;
+      refreshCardControls(); renderPreview();
+    }
     function mainPictureFrame(platform) {
       const format = document.getElementById('format-select')?.value;
       if (format === '純文字' || format === '影片') return null;
@@ -1180,8 +1218,8 @@
         const tools = node('div', 'slide-tools');
         const prev = node('button', 'slide-control', '‹'), next = node('button', 'slide-control', '›');
         prev.type = next.type = 'button'; prev.setAttribute('aria-label', '上一張圖片'); next.setAttribute('aria-label', '下一張圖片');
-        prev.addEventListener('click', () => { pictureSlide = (pictureSlide - 1 + ordered.length) % ordered.length; renderPreview(); });
-        next.addEventListener('click', () => { pictureSlide = (pictureSlide + 1) % ordered.length; renderPreview(); });
+        prev.addEventListener('click', () => { selectPreviewPage(-1); });
+        next.addEventListener('click', () => { selectPreviewPage(1); });
         tools.append(prev, node('span', 'slide-count', `${pictureSlide % ordered.length + 1} / ${ordered.length}`), next); frame.append(tools);
       }
       return frame;
@@ -1252,7 +1290,7 @@
       return `${width / divisor}:${height / divisor}`;
     }
     function imageGenerationError(code) {
-      return ({ 400: '這個模型不接受這個要求，換一個生圖模型試試', 401: '金鑰不對', 402: '全班的額度用完了', 404: '生圖模型名稱打錯了', 429: '太多人同時在用', 502: '這張沒畫完（沒有扣錢），再按一次' })[code] || '生圖暫時失敗，請稍後再試或先用 📤 上傳。';
+      return ({ 400: '這個模型不接受這個要求，換一個生圖模型試試', 401: '金鑰不對', 402: '全班的額度用完了', 404: '生圖模型名稱打錯了', 429: '太多人同時在用', 502: '這次沒有取得圖片，請先確認供應商費用紀錄，再決定是否重試' })[code] || '生圖暫時失敗，請稍後再試或先用 📤 上傳。';
     }
     function renderImageUsage(lastCost) {
       const usage = readAIUsage();
@@ -1395,6 +1433,13 @@
     }
     // 綁定想圖再畫
     document.getElementById('plan-image').addEventListener('click', planPostImage);
+    document.getElementById('image-status').addEventListener('click', () => {
+      const text = document.getElementById('image-status').textContent;
+      if (!text.includes('設定')) return;
+      document.getElementById('open-settings').click();
+      document.getElementById(text.includes('圖片規格') ? 'image-spec' : 'api-key').focus();
+    });
+
 
     function avatar() { return node('div', 'avatar', 'C'); }
 
@@ -1715,6 +1760,7 @@
       for (const id of ['topic', 'exclude', 'unknown']) {
         if (!document.getElementById(id).value.trim()) {
           promptError.textContent = id === 'topic' ? '請先寫這篇的主題。' : '請填「先不要講的」與「還不確定的」；沒有就填「無」。';
+          if (typeof selectWorkflowStage === 'function') selectWorkflowStage(0);
           document.getElementById(id).focus();
           return false;
         }
@@ -1804,6 +1850,32 @@
       if (code === 400 && /api[\s_-]*key/i.test(detail || '')) return '金鑰不對';
       return ({ 401: '金鑰不對', 403: '沒有權限', 404: '模型名稱不對，或免費版不能用', 429: '免費額度用完了' })[code] || '要求格式不對或 AI 暫時無法回覆，請稍後再試';
     }
+    async function readAIResponse(response) {
+      if (!response.headers?.get('content-type')?.includes('text/event-stream') || !response.body) return response.json();
+      const reader = response.body.getReader(), decoder = new TextDecoder();
+      let buffer = '', content = '', usage = {}, finish = null, interrupted = false;
+      function consume(line) {
+        if (!line.startsWith('data:')) return;
+        const text = line.slice(5).trim(); if (!text || text === '[DONE]') return;
+        const event = JSON.parse(text);
+        if (event.error) throw new Error(event.error.message || 'AI 回覆中斷');
+        const choice = event.choices?.[0];
+        if (typeof choice?.delta?.content === 'string') content += choice.delta.content;
+        if (choice?.finish_reason) finish = choice.finish_reason;
+        if (event.usage) usage = event.usage;
+      }
+      try {
+        while (true) {
+          const { value, done } = await reader.read();
+          buffer += decoder.decode(value || new Uint8Array(), { stream: !done });
+          const lines = buffer.split('\n'); buffer = lines.pop(); lines.forEach(consume);
+          if (done) { if (buffer.trim()) consume(buffer); break; }
+        }
+      } catch (error) { if (!content.trim()) throw error; interrupted = true; }
+      finally { reader.releaseLock(); }
+      if (!finish) interrupted = true;
+      return { choices: [{ message: { content }, finish_reason: finish }], usage, interrupted };
+    }
     async function callAIProvider(provider, messages, config, task = 'write') {
       const profile = AI_TASKS[task] || AI_TASKS.write;
       const isOpenRouter = provider === 'OpenRouter';
@@ -1817,13 +1889,14 @@
       if (isOpenRouter) usage.openrouter.unknownCosts++;
       saveAIUsage(usage);
       const body = { model: isOpenRouter ? config.customModel || config.model || OPENROUTER_MODEL : config.geminiModel, messages };
+      body.stream = true;
       if (isOpenRouter) Object.assign(body, { max_tokens: profile.maxTokens, reasoning: { effort: task === 'check' ? config.thinking || 'low' : 'low', exclude: true }, usage: { include: true } });
       try {
         const response = await fetch(isOpenRouter ? 'https://openrouter.ai/api/v1/chat/completions' : 'https://generativelanguage.googleapis.com/v1beta/openai/chat/completions', {
           method: 'POST', headers: { Authorization: `Bearer ${apiKey}`, 'Content-Type': 'application/json' }, body: JSON.stringify(body), signal: controller.signal
         });
         let data;
-        try { data = await response.json(); }
+        try { data = await readAIResponse(response); }
         catch (error) {
           if (error.name === 'AbortError') throw error;
           if (!response.ok) throw new Error(providerError(provider, response.status));
@@ -1844,7 +1917,7 @@
         const content = typeof data?.choices?.[0]?.message?.content === 'string' ? data.choices[0].message.content.replace(/<think>[\s\S]*?(?:<\/think>|$)/gi, '').trim() : '';
         const truncated = data?.choices?.[0]?.finish_reason === 'length';
         if (!content) throw new Error(truncated ? `${profile.label}輸出額度已用完，沒有產出正文（模型：${body.model}${isOpenRouter ? `；上限 ${profile.maxTokens} tokens` : ''}）。請縮短要求或換模型後再試。` : `模型 ${body.model} 沒有傳回正文。請重試或改用 🧩 組好指令。`);
-        return { content, provider, tokens, cost, warning: truncated ? `回覆可能被切掉了（模型：${body.model}；${profile.label}額度已用完）。請確認內容完整後再採用。` : '' };
+        return { content, provider, tokens, cost, warning: data.interrupted ? '回覆可能被切掉了：連線中斷或等太久，已保留收到的文字；請確認完整性後再採用。' : truncated ? `回覆可能被切掉了（模型：${body.model}；${profile.label}額度已用完）。請確認內容完整後再採用。` : '' };
       } catch (error) {
         if (error.name === 'AbortError') throw new Error(`等太久（模型：${body.model}；60 秒內未完成回覆）。請稍後重試或換模型。`);
         if (error instanceof TypeError) throw new Error('連不到（檢查網路）');
@@ -1907,10 +1980,10 @@
         posts[currentPlatform] = editor.value;
         result.platforms.forEach(platform => { posts[platform] = result.sections[platform]; });
         showPlatform(currentPlatform);
-        autoSaveDraft();
+        const writingSaved = autoSaveDraft();
         questions.textContent = result.sections['要問我的'] ? `要問我的：\n${result.sections['要問我的']}` : '';
         questions.hidden = !result.sections['要問我的'];
-        status.textContent = [response.warning, `已分到 ${result.platforms.join('、')}，請確認內容與手機預覽。`].filter(Boolean).join('\n');
+        status.textContent = [response.warning, `已分到 ${result.platforms.join('、')}，請確認內容與手機預覽。`, writingSaved === false ? '⚠️ 內容已產出但尚未保存，請保留此頁並下載備份。' : '已保存。'].filter(Boolean).join('\n');
       } catch (error) {
         status.classList.toggle('ai-error', true);
         status.textContent = error.message || 'AI 暫時無法回覆，請稍後再試。';
@@ -2002,9 +2075,9 @@
         posts[platform] = response.content;
         assistantHistories[platform] = [...(assistantHistories[platform] || []), { role: 'user', content: request }, { role: 'assistant', content: response.content }].slice(-8);
         showPlatform(platform);
-        autoSaveDraft();
+        const assistantSaved = autoSaveDraft();
         if (input.value.trim() === request) input.value = '';
-        status.textContent = [response.warning, `已修改 ${platform}；請確認有沒有加入素材卡沒有的事實。不滿意可按「↩ 復原上一版」。`].filter(Boolean).join('\n');
+        status.textContent = [response.warning, `已修改 ${platform}；請確認有沒有加入素材卡沒有的事實。不滿意可按「↩ 復原上一版」。`, assistantSaved === false ? '⚠️ 修改尚未保存，請保留此頁並下載備份。' : '已保存。'].filter(Boolean).join('\n');
       } catch (error) {
         if (postContextVersion === contextVersion) {
           status.textContent = error.message || '小幫手暫時無法回覆，請稍後重試。';
@@ -2695,6 +2768,59 @@
     updatePictureStorage();
     renderPreview();
     renderAssistant();
+
+    // Workflow layout: move existing controls without rebuilding or clearing their state.
+    const workflowWorkspace = document.querySelector('.workspace');
+    const contentPanel = document.querySelector('[aria-labelledby="materials-title"]');
+    const writingPanel = document.querySelector('[aria-labelledby="editor-title"]');
+    const picturePanel = document.createElement('section'); picturePanel.className = 'panel'; workflowWorkspace.insertBefore(picturePanel, document.querySelector('.preview'));
+    picturePanel.append(document.querySelector('.post-pictures'));
+    const deliveryPanel = document.createElement('section'); deliveryPanel.className = 'panel'; workflowWorkspace.insertBefore(deliveryPanel, document.querySelector('.preview'));
+    const deliveryHeading = document.createElement('div'); deliveryHeading.className = 'panel-head';
+    deliveryHeading.innerHTML = '<h2>檢查與下載</h2><p>確認文案與圖卡，再複製文字、下載圖片，帶去社群發布。</p>';
+    deliveryPanel.append(deliveryHeading);
+    const reviewContent = document.getElementById('review-view'); deliveryPanel.append(reviewContent); reviewContent.hidden = false;
+    document.querySelector('.review-tabs').hidden = true;
+    const exportActions = document.getElementById('download-picture').parentElement;
+    deliveryPanel.append(exportActions);
+    for (const id of ['copy-post','delivery-status','picture-status','check-status']) deliveryPanel.append(document.getElementById(id));
+    const checkButton = document.getElementById('check-ai'); deliveryPanel.insertBefore(checkButton, reviewContent);
+    const actionRow = document.getElementById('generate-ai').parentElement;
+    writingPanel.querySelector('.editor-content').prepend(actionRow);
+    const platformTabs = document.getElementById('platform-tabs'); writingPanel.querySelector('.panel-head').append(platformTabs);
+    workflowWorkspace.insertBefore(picturePanel, document.querySelector('.preview'));
+    workflowWorkspace.insertBefore(deliveryPanel, document.querySelector('.preview'));
+    const workflowPanels = [contentPanel, writingPanel, picturePanel, deliveryPanel];
+    const workflowButtons = Array.from(document.querySelectorAll('.workflow-nav button'));
+    const workflowIds = ['workflow-content','workflow-writing','workflow-pictures','workflow-delivery'];
+    let workflowStage = 0;
+    function selectWorkflowStage(index) {
+      if (!Number.isInteger(index) || index < 0 || index >= workflowPanels.length) return;
+      workflowStage = index;
+      workflowPanels.forEach((panel, i) => { panel.hidden = i !== index; });
+      workflowButtons.forEach((button, i) => { button.setAttribute('aria-selected', String(i === index)); button.tabIndex = i === index ? 0 : -1; });
+    }
+    // workflow bindings
+    workflowPanels.forEach((panel, index) => {
+      panel.id = workflowIds[index]; panel.setAttribute('role','tabpanel'); panel.setAttribute('aria-labelledby', 'workflow-tab-' + index);
+      const footer = document.createElement('div'); footer.className = 'workflow-footer';
+      if (index > 0) { const back = document.createElement('button'); back.type = 'button'; back.className = 'secondary-action'; back.textContent = '← 上一步'; back.onclick = () => { selectWorkflowStage(index - 1); workflowButtons[index - 1].focus(); }; footer.append(back); }
+      if (index < 3) { const next = document.createElement('button'); next.type = 'button'; next.className = 'primary-action'; next.textContent = ['下一步：寫文案 →','下一步：做圖片 →','下一步：檢查與下載 →'][index]; next.onclick = () => { selectWorkflowStage(index + 1); workflowButtons[index + 1].focus(); }; footer.append(next); }
+      panel.append(footer);
+    });
+    workflowButtons.forEach((button, index) => {
+      button.addEventListener('click', () => { selectWorkflowStage(index); workflowWorkspace.classList.remove('mobile-preview'); });
+      button.addEventListener('keydown', event => { if (!['ArrowLeft','ArrowRight','Home','End'].includes(event.key)) return; event.preventDefault(); const next = event.key === 'Home' ? 0 : event.key === 'End' ? 3 : (index + (event.key === 'ArrowRight' ? 1 : 3)) % 4; selectWorkflowStage(next); workflowButtons[next].focus(); });
+    });
+    const mobileViews = document.createElement('div'); mobileViews.className = 'workflow-mobile-preview';
+    for (const [label, preview] of [['編輯',false],['看成品預覽',true]]) { const button = document.createElement('button'); button.type = 'button'; button.className = 'secondary-action'; button.textContent = label; button.onclick = () => { workflowWorkspace.classList.toggle('mobile-preview',preview); }; mobileViews.append(button); }
+    workflowWorkspace.before(mobileViews);
+    document.getElementById('check-ai').addEventListener('click', () => { selectWorkflowStage(3); });
+    document.getElementById('review-tab').addEventListener('click', () => selectWorkflowStage(3));
+    // Review and phone are now separate regions; keep both available.
+    const originalOpenReview = openReview;
+    openReview = function(showReview = true) { originalOpenReview(showReview); document.getElementById('phone-view').hidden = false; reviewContent.hidden = false; if (showReview) selectWorkflowStage(3); };
+    selectWorkflowStage(0);
   </script>
 </body>
 </html>
