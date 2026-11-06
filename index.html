@@ -405,7 +405,9 @@
       .workflow-workspace:not(.mobile-preview) > .preview { display: none; }
     }
   </style>
-</head>
+<style>
+#rich-menu-dialog{width:min(96vw,1000px)} .menu-options{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}.menu-cell{display:grid;grid-template-columns:40px 70px 1fr 120px 1.3fr;gap:8px;align-items:center;margin:10px 0}.menu-cell label{margin:0}.menu-cell input,.menu-cell select{min-width:0}#rich-menu-canvas{display:block;width:100%;height:auto;margin:18px 0;border:1px solid var(--line)}.rich-menu-phone{width:100%;display:block}.rich-menu-bar{text-align:center;background:white;padding:10px;font-size:13px}#rich-menu-errors{color:#b42318;white-space:pre-line}#rich-menu-setting-copy{width:100%;min-height:130px}@media(max-width:650px){.menu-options{grid-template-columns:1fr}.menu-cell{grid-template-columns:30px 65px 1fr}.menu-cell select{grid-column:2 / -1}.menu-cell input:last-child{grid-column:2 / -1}}
+</style></head>
 <body>
   <header class="topbar">
     <div class="top-inner">
@@ -413,7 +415,7 @@
         <p class="eyebrow">COURTMATE · SOCIAL STUDIO</p>
         <h1>CourtMate v2 <span>社群貼文工作台</span></h1>
       </div>
-      <div class="top-actions"><div class="status"><strong>保存與交付版</strong> · 本機資料</div><button class="settings-trigger" id="new-post" type="button">＋ 新的一篇</button><button class="settings-trigger" id="open-posts" type="button">📁 我的貼文</button><button class="settings-trigger" id="open-backup" type="button">🧳 備份與還原</button><button class="settings-trigger" id="open-settings" type="button">⚙ 設定</button></div>
+      <div class="top-actions"><div class="status"><strong>保存與交付版</strong> · 本機資料</div><button class="settings-trigger" id="new-post" type="button">＋ 新的一篇</button><button class="settings-trigger" id="open-posts" type="button">📁 我的貼文</button><button class="settings-trigger" id="open-backup" type="button">🧳 備份與還原</button><button class="settings-trigger" id="open-rich-menu" type="button" disabled>📋 圖文選單</button><button class="settings-trigger" id="open-settings" type="button">⚙ 設定</button></div>
     </div>
   </header>
   <div class="intro">
@@ -537,6 +539,7 @@
       </div>
     </section>
   </main>
+<dialog id="rich-menu-dialog" aria-labelledby="rich-menu-title"><div class="dialog-head"><div><h2 id="rich-menu-title">📋 圖文選單</h2><p>製作圖片後，請到 LINE 後台設定各格動作。本選單獨立保存在此瀏覽器，不跟著貼文切換。</p></div><button class="icon-close" type="button" data-close="rich-menu-dialog" aria-label="關閉圖文選單">×</button></div><div class="dialog-body"><div class="menu-options"><label>版型<select id="rich-menu-layout"></select></label><label>底色<select id="rich-menu-background"><option value="brand">品牌主色</option><option value="white">白色</option><option value="image">這篇的主圖加深一點</option></select></label><label>選單列的字<input id="rich-menu-bar" type="text"></label></div><p class="helper">格子文字最多 12 字；圖示可空白。文字動作未填內容時，使用格子上的字。切換小版型不會清除其他格。📲 下載 App 的 example.com 網址僅供模擬，並非正式下載連結；上架後請在該格「內容」貼上正式下載頁網址（可提供 Google Play／App Store 入口）。</p><div id="rich-menu-cells"></div><canvas id="rich-menu-canvas" aria-label="圖文選單圖片預覽"></canvas><p id="rich-menu-errors" role="alert"></p><div class="dialog-actions"><button id="rich-menu-download" class="primary-action" type="button">⬇ 下載選單圖</button><button id="rich-menu-copy" class="secondary-action" type="button">📋 複製設定表</button></div><p id="rich-menu-status" role="status"></p><textarea id="rich-menu-setting-copy" readonly aria-label="可手動複製的設定表" hidden></textarea></div></dialog>
   <dialog id="backup-dialog" aria-labelledby="backup-title">
     <div class="dialog-head"><div><h2 id="backup-title">備份與還原</h2><p>帶走貼文、圖、影片、對話、上一版、品牌規格與用量紀錄。備份不含兩組金鑰。</p></div><button class="icon-close" type="button" data-close="backup-dialog" aria-label="關閉備份與還原">×</button></div>
     <div class="dialog-body">
@@ -608,6 +611,24 @@
     <div class="dialog-body"><div class="board" id="post-list"></div><p class="dialog-status" id="posts-status" role="status"></p></div>
   </dialog>
   <script>
+// LINE 圖文選單核心
+const MENUS = [
+{id:'large6',name:'大型 6 格',w:2500,h:1686,cols:3,rows:2},
+{id:'large4',name:'大型 4 格',w:2500,h:1686,cols:2,rows:2},
+{id:'large1',name:'大型 1 格',w:2500,h:1686,cols:1,rows:1},
+{id:'small3',name:'小型 3 格',w:2500,h:843,cols:3,rows:1},
+{id:'small2',name:'小型 2 格',w:2500,h:843,cols:2,rows:1},
+{id:'small1',name:'小型 1 格',w:2500,h:843,cols:1,rows:1}];
+function menuCut(v,n){return Array.from(String(v||'')).slice(0,n).join('');}
+function normalizeRichMenu(v={}){return {layout:MENUS.some(x=>x.id===v.layout)?v.layout:'large4',bar:menuCut(v.bar===undefined?'選單':v.bar,14),background:['brand','white','image'].includes(v.background)?v.background:'brand',cells:Array.from({length:6},(_,i)=>{const c=v.cells?.[i]||{};return {icon:menuCut(c.icon,20),label:menuCut(c.label,12),action:['text','url','none'].includes(c.action)?c.action:'text',content:String(c.content||'')};})};}
+function richMenuLayout(m){return MENUS.find(x=>x.id===m.layout)||MENUS[1];}
+function menuPosition(l,i){const x=i%l.cols,y=Math.floor(i/l.cols);return (l.rows===1?(l.cols===1?'全幅':['左','中','右'][l.cols===2?x*2:x]):(l.cols===1?'':l.cols===2?['左','右'][x]:['左','中','右'][x])+['上','下'][y]);}
+function validateRichMenu(m){const cells=m.cells.slice(0,richMenuLayout(m).cols*richMenuLayout(m).rows),errors=[];if(cells.every(c=>c.action==='none'))errors.push('至少一格必須設定動作，不能全部不設定。');cells.forEach((c,i)=>{if(!c.label.trim()&&!c.icon.trim())errors.push(String.fromCharCode(65+i)+' 格沒有字也沒有圖示。');if(c.action==='url'){try{const u=new URL(c.content);if(u.protocol!=='https:')throw 0;}catch{errors.push(String.fromCharCode(65+i)+' 格網址必須是有效的 https:// 網址。');}}});return errors;}
+function richMenuTable(m){const l=richMenuLayout(m);return ['版型：'+l.name+' '+l.w+'×'+l.h,'選單列的字：'+m.bar,...m.cells.slice(0,l.cols*l.rows).map((c,i)=>String.fromCharCode(65+i)+'（'+menuPosition(l,i)+'）'+c.icon+' '+c.label+' → '+(c.action==='none'?'不設定':c.action==='url'?'網址「'+c.content+'」':'文字「'+(c.content.trim()||c.label)+'」'))].join('\n');}
+async function richMenuJpeg(canvas){for(const q of [.92,.85,.78,.7,.6,.5]){const b=await new Promise(r=>canvas.toBlob(r,'image/jpeg',q));if(!b)throw new Error('無法輸出 JPEG。');if(b.size<=1000000)return b;}throw new Error('壓縮後仍超過 1 MB，請改用純色底或簡單主圖。');}
+let richMenu=normalizeRichMenu({cells:[{icon:'🎾',label:'認識網咖',content:'網咖是什麼'},{icon:'💬',label:'分享需求',content:'我想分享網球需求'},{icon:'📋',label:'常見問題',content:'常見問題'},{icon:'📲',label:'下載 App',action:'url',content:'https://example.com/tennis-companion-app'}]});
+// LINE 圖文選單核心結束
+
     // 保存與交付核心：可攜格式不包含服務金鑰。
     function normalizeCardDesign(value) {
       const d = value && typeof value === 'object' ? value : {};
@@ -1513,6 +1534,7 @@
         row.append(node('span', 'line-time', '預覽 ' + new Date().toLocaleTimeString('zh-TW', { hour: '2-digit', minute: '2-digit', hour12: false })));
         screen.append(row);
         phone.append(screen);
+        mountRichMenuPreview(phone);
       } else {
         const post = node('div', 'threads-post');
         post.append(avatar());
@@ -2821,6 +2843,32 @@
     const originalOpenReview = openReview;
     openReview = function(showReview = true) { originalOpenReview(showReview); document.getElementById('phone-view').hidden = false; reviewContent.hidden = false; if (showReview) selectWorkflowStage(3); };
     selectWorkflowStage(0);
+    let menuDrawVersion=0,menuSaveQueue=Promise.resolve(),menuDatabase;
+    const menuKey=JSON.stringify([BRAND.name,BRAND.account]);
+    const menuDialog=document.getElementById('rich-menu-dialog');
+    const menuStatus=document.getElementById('rich-menu-status');
+    const menuError=document.getElementById('rich-menu-errors');
+    const menuLayoutSelect=document.getElementById('rich-menu-layout');
+    for(const l of MENUS){const o=document.createElement('option');o.value=l.id;o.textContent=l.name+'（'+l.w+'×'+l.h+'）';menuLayoutSelect.append(o);}
+    function menuTransaction(mode,value){return new Promise((resolve,reject)=>{if(!menuDatabase){reject(new Error('無法使用 IndexedDB，設定尚未保存。'));return;}const tx=menuDatabase.transaction('menus',mode),store=tx.objectStore('menus');const r=mode==='readonly'?store.get(menuKey):store.put(value,menuKey);let result;r.onsuccess=()=>{result=r.result;};tx.oncomplete=()=>resolve(result);tx.onerror=()=>reject(tx.error||new Error('選單保存失敗'));tx.onabort=()=>reject(tx.error||new Error('選單保存已中斷'));});}
+    async function initRichMenu(){try{menuDatabase=await new Promise((resolve,reject)=>{const r=indexedDB.open('studio-line-rich-menu-v1',1);r.onupgradeneeded=()=>r.result.createObjectStore('menus');r.onsuccess=()=>resolve(r.result);r.onerror=()=>reject(r.error);r.onblocked=()=>reject(new Error('請關閉其他工作台分頁再試。'));});menuDatabase.onversionchange=()=>menuDatabase.close();const saved=await menuTransaction('readonly');if(saved){richMenu=normalizeRichMenu(saved);const cell=richMenu.cells[3];if(cell.label==='留言給我們'&&cell.action==='text'&&cell.content==='我想留言'){richMenu.cells[3]={icon:'📲',label:'下載 App',action:'url',content:'https://example.com/tennis-companion-app'};await menuTransaction('readwrite',richMenu);}}}catch(e){menuStatus.textContent='無法讀取或保存選單：'+e.message;}finally{document.getElementById('open-rich-menu').disabled=false;renderPreview();}}
+    function saveRichMenu(){const snapshot=JSON.parse(JSON.stringify(richMenu));menuSaveQueue=menuSaveQueue.catch(()=>{}).then(()=>menuTransaction('readwrite',snapshot)).then(()=>{menuStatus.textContent='選單已保存於此瀏覽器（IndexedDB）。';}).catch(e=>{menuStatus.textContent='尚未保存：'+e.message;});}
+    function menuMainImage(){return pictures.find(p=>p.id===mainPictureId)?.dataUrl||'';}
+    async function drawRichMenu(m,source){await document.fonts?.ready;const l=richMenuLayout(m),canvas=document.createElement('canvas');canvas.width=l.w;canvas.height=l.h;const ctx=canvas.getContext('2d');if(!ctx)throw new Error('瀏覽器無法建立畫布。');const brand=getComputedStyle(document.documentElement).getPropertyValue('--main').trim()||'#173f35';ctx.fillStyle=m.background==='white'?'#fff':brand;ctx.fillRect(0,0,l.w,l.h);if(m.background==='image'){if(!source)throw new Error('這篇尚未選擇主圖，請先設定主圖或改用純色底。');const img=await new Promise((resolve,reject)=>{const i=new Image();i.onload=()=>resolve(i);i.onerror=()=>reject(new Error('主圖無法讀取。'));i.src=source;});ctx.drawImage(img,...coverCrop(img.naturalWidth,img.naturalHeight,l.w,l.h),0,0,l.w,l.h);ctx.fillStyle='rgba(0,0,0,.68)';ctx.fillRect(0,0,l.w,l.h);}
+    const color=m.background==='white'?brand:'#fff',cw=l.w/l.cols,ch=l.h/l.rows,family=getComputedStyle(document.body).fontFamily;ctx.strokeStyle=m.background==='white'?'#ccc':'rgba(255,255,255,.4)';ctx.lineWidth=3;for(let x=1;x<l.cols;x++){ctx.beginPath();ctx.moveTo(x*cw,0);ctx.lineTo(x*cw,l.h);ctx.stroke();}for(let y=1;y<l.rows;y++){ctx.beginPath();ctx.moveTo(0,y*ch);ctx.lineTo(l.w,y*ch);ctx.stroke();}ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillStyle=color;
+    m.cells.slice(0,l.cols*l.rows).forEach((c,i)=>{const x=(i%l.cols+.5)*cw,y=(Math.floor(i/l.cols)+.5)*ch;let size=Math.min(cw*.12,ch*.15);let lines=[];for(;;){ctx.font=`700 ${size}px ${family}`;lines=[];let line='';for(const char of Array.from(c.label)){if(line&&ctx.measureText(line+char).width>cw*.84){lines.push(line);line=char;}else line+=char;}if(line)lines.push(line);if(lines.length<=2||size<=20)break;size-=3;}if(c.icon){ctx.font=`${Math.min(cw*.19,ch*.23)}px ${family}`;ctx.fillText(c.icon,x,y-(lines.length?ch*.15:0));}ctx.font=`700 ${size}px ${family}`;lines.slice(0,2).forEach((line,j)=>ctx.fillText(line,x,y+(c.icon?ch*.18:0)+(j-(lines.length-1)/2)*size*1.3));});return canvas;}
+    function mountRichMenuPreview(target){const host=document.createElement('div');host.className='rich-menu-preview';const bar=document.createElement('div');bar.className='rich-menu-bar';bar.textContent=(richMenu.bar||'選單')+' ▾';host.append(bar);target.append(host);drawRichMenu(normalizeRichMenu(richMenu),menuMainImage()).then(canvas=>{if(!host.isConnected)return;canvas.className='rich-menu-phone';host.append(canvas);}).catch(()=>{const hint=document.createElement('p');hint.className='helper';hint.textContent='選單圖片尚未就緒，請開啟「圖文選單」檢查。';host.append(hint);});}
+    async function updateMenuPreview(){const version=++menuDrawVersion;const m=normalizeRichMenu(richMenu);const errors=validateRichMenu(m);menuError.textContent=errors.join('\n');try{const canvas=await drawRichMenu(m,menuMainImage());if(version!==menuDrawVersion)return;const view=document.getElementById('rich-menu-canvas');view.width=canvas.width;view.height=canvas.height;view.getContext('2d').drawImage(canvas,0,0);}catch(e){if(version===menuDrawVersion){menuError.textContent=[...errors,e.message].join('\n');const view=document.getElementById('rich-menu-canvas');view.getContext('2d').clearRect(0,0,view.width,view.height);}}renderPreview();}
+    function menuChanged(){richMenu=normalizeRichMenu(richMenu);document.getElementById('rich-menu-setting-copy').hidden=true;saveRichMenu();updateMenuPreview();}
+    function fillMenuForm(){menuLayoutSelect.value=richMenu.layout;document.getElementById('rich-menu-background').value=richMenu.background;document.getElementById('rich-menu-bar').value=richMenu.bar;const rows=document.getElementById('rich-menu-cells');rows.replaceChildren();const l=richMenuLayout(richMenu);richMenu.cells.slice(0,l.cols*l.rows).forEach((c,i)=>{const row=document.createElement('div');row.className='menu-cell';const code=document.createElement('strong');code.textContent=String.fromCharCode(65+i);code.title=menuPosition(l,i);row.append(code);for(const field of ['icon','label','action','content']){const el=document.createElement(field==='action'?'select':'input');el.setAttribute('aria-label',code.textContent+' '+({icon:'圖示',label:'格子上的字',action:'按了做什麼',content:'內容'}[field]));if(field==='action'){for(const [v,t] of [['text','送出文字'],['url','開網址'],['none','不設定']]){const o=document.createElement('option');o.value=v;o.textContent=t;el.append(o);}}else{el.type='text';el.placeholder={icon:'emoji',label:'最多 12 字',content:'文字或 https:// 網址'}[field];}el.value=c[field];el.addEventListener(field==='action'?'change':'input',()=>{let v=el.value;if(field==='label')v=menuCut(v,12);if(field==='icon')v=Array.from(new Intl.Segmenter('zh-Hant',{granularity:'grapheme'}).segment(v))[0]?.segment||'';richMenu.cells[i][field]=v;if(el.value!==v)el.value=v;menuChanged();});row.append(el);}rows.append(row);});updateMenuPreview();}
+    document.getElementById('open-rich-menu').onclick=()=>{fillMenuForm();menuDialog.showModal();};
+    menuLayoutSelect.onchange=()=>{richMenu.layout=menuLayoutSelect.value;fillMenuForm();menuChanged();};
+    document.getElementById('rich-menu-background').onchange=e=>{richMenu.background=e.target.value;menuChanged();};
+    document.getElementById('rich-menu-bar').oninput=e=>{richMenu.bar=menuCut(e.target.value,14);e.target.value=richMenu.bar;menuChanged();};
+    document.getElementById('rich-menu-download').onclick=async e=>{const button=e.currentTarget;button.disabled=true;try{const m=normalizeRichMenu(richMenu),errors=validateRichMenu(m);if(errors.length)throw new Error(errors.join('\n'));const canvas=await drawRichMenu(m,menuMainImage()),blob=await richMenuJpeg(canvas),url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download=(BRAND.name||'品牌').replace(/[\\/:*?"<>|]/g,'_')+'_圖文選單_'+canvas.width+'x'+canvas.height+'.jpg';a.click();setTimeout(()=>URL.revokeObjectURL(url),30000);menuStatus.textContent='下載好了：'+canvas.width+'×'+canvas.height+'，'+(blob.size/1000000).toFixed(3)+' MB';menuError.textContent='';}catch(err){menuError.textContent=err.message;}finally{button.disabled=false;}};
+    document.getElementById('rich-menu-copy').onclick=async()=>{const errors=validateRichMenu(richMenu);if(errors.length){menuError.textContent=errors.join('\n');return;}const text=richMenuTable(richMenu);try{await navigator.clipboard.writeText(text);menuStatus.textContent='設定表已複製，請照表到 LINE 後台設定。';}catch{const field=document.getElementById('rich-menu-setting-copy');field.hidden=false;field.value=text;field.focus();field.select();menuStatus.textContent='請複製下方設定表。';}};
+    initRichMenu();
+
   </script>
 </body>
 </html>
