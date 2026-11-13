@@ -618,6 +618,7 @@
       <div class="dialog-actions">
         <button class="primary-action" id="auth-signin" type="button">登入</button>
         <button class="secondary-action" id="auth-signup" type="button">第一次：註冊</button>
+        <button class="secondary-action" id="auth-update-pw" type="button" hidden>設定新密碼</button>
         <button class="secondary-action" id="auth-signout" type="button">登出</button>
         <button class="secondary-action" type="button" data-close="auth-dialog">關閉</button>
       </div>
@@ -2965,15 +2966,27 @@ let richMenu=normalizeRichMenu({cells:[{icon:'🎾',label:'認識網咖',content
     const openAuthBtn = document.getElementById('open-auth');
     const authEmailInput = document.getElementById('auth-email');
     const authPasswordInput = document.getElementById('auth-password');
+    const authUpdatePwBtn = document.getElementById('auth-update-pw');
     const authStatus = document.getElementById('auth-status');
+    const isRecoveryHash = location.hash.includes('type=recovery');
 
     function updateAuthUI() {
       openAuthBtn.textContent = me ? `☁ ${me.email}` : '🔐 登入';
+      authUpdatePwBtn.hidden = !me;
       if (!sb) {
         authStatus.textContent = `還沒接雲端：${sbInitReason}`;
       } else if (me) {
         authStatus.textContent = `已登入：${me.email}`;
       }
+    }
+
+    function promptPasswordRecovery() {
+      if (me?.email) authEmailInput.value = me.email;
+      authPasswordInput.value = '';
+      updateAuthUI();
+      authStatus.textContent = '已透過重設信登入！請在上方輸入新密碼（至少 6 字）後按「設定新密碼」。';
+      if (!authDialog.open) authDialog.showModal();
+      authPasswordInput.focus();
     }
 
     openAuthBtn.addEventListener('click', () => {
@@ -3010,6 +3023,18 @@ let richMenu=normalizeRichMenu({cells:[{icon:'🎾',label:'認識網咖',content
       }
       me = data.user || null;
       updateAuthUI();
+    });
+
+    authUpdatePwBtn.addEventListener('click', async () => {
+      if (!sb || !me) { authStatus.textContent = '請先透過登入或重設信登入'; return; }
+      const password = authPasswordInput.value;
+      if (password.length < 6) { authStatus.textContent = '新密碼至少 6 個字'; return; }
+      authStatus.textContent = '正在更新密碼…';
+      const { error } = await sb.auth.updateUser({ password });
+      if (error) { authStatus.textContent = translateAuthError(error); return; }
+      authPasswordInput.value = '';
+      authStatus.textContent = '新密碼設定成功！之後請用這個新密碼登入。';
+      if (location.hash.includes('access_token=')) history.replaceState(null, '', location.pathname + location.search);
     });
 
     async function clearLocalPostsAndMedia() {
@@ -3055,14 +3080,16 @@ let richMenu=normalizeRichMenu({cells:[{icon:'🎾',label:'認識網咖',content
       sb.auth.getSession().then(({ data }) => {
         me = data?.session?.user || null;
         updateAuthUI();
+        if (me && isRecoveryHash) promptPasswordRecovery();
         if (me && !autoPulledUserIds.has(me.id)) {
           autoPulledUserIds.add(me.id);
           pullPostsFromCloud({ silentIfEmpty: true }).catch(() => {});
         }
       });
-      sb.auth.onAuthStateChange((_event, session) => {
+      sb.auth.onAuthStateChange((event, session) => {
         me = session?.user || null;
         updateAuthUI();
+        if (event === 'PASSWORD_RECOVERY') promptPasswordRecovery();
         if (me && !autoPulledUserIds.has(me.id)) {
           autoPulledUserIds.add(me.id);
           pullPostsFromCloud({ silentIfEmpty: true }).catch(() => {});
