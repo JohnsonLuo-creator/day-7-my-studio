@@ -2660,7 +2660,7 @@ let richMenu=normalizeRichMenu({cells:[{icon:'🎾',label:'認識網咖',content
       if (!changed) return { item, uploadedCount };
       const updated = { ...item, pictures: nextPictures, savedAt: Date.now() };
       const nextCollection = savedPosts.map(saved => saved.id === updated.id ? portablePost(updated) : saved);
-      const draft = currentSavedId === updated.id ? capturePost() : null;
+      const draft = capturePost();
       if (saveWorkspace(nextCollection, draft)) savedPosts = nextCollection;
       return { item: updated, uploadedCount };
     }
@@ -3028,6 +3028,11 @@ let richMenu=normalizeRichMenu({cells:[{icon:'🎾',label:'認識網咖',content
         });
       }
       applyPost({ card: {}, type: POST_TYPES[0], posts: {}, platform: 'IG' });
+      storageStatus.textContent = '';
+      cloudStatus.textContent = '';
+      cloudStatus.classList.remove('storage-error');
+      autosaveStatus.textContent = '';
+      autosaveStatus.hidden = true;
       updatePictureStorage(true);
       refreshWarehouseUsage().catch(() => {});
     }
