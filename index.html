@@ -415,7 +415,7 @@
         <p class="eyebrow">COURTMATE · SOCIAL STUDIO</p>
         <h1>CourtMate v2 <span>社群貼文工作台</span></h1>
       </div>
-      <div class="top-actions"><div class="status"><strong>保存與交付版</strong> · 本機資料</div><button class="settings-trigger" id="new-post" type="button">＋ 新的一篇</button><button class="settings-trigger" id="open-posts" type="button">📁 我的貼文</button><button class="settings-trigger" id="open-backup" type="button">🧳 備份與還原</button><button class="settings-trigger" id="open-rich-menu" type="button" disabled>📋 圖文選單</button><button class="settings-trigger" id="open-settings" type="button">⚙ 設定</button></div>
+      <div class="top-actions"><div class="status"><strong>保存與交付版</strong> · 本機資料</div><div class="status" id="autosave-status" aria-live="polite" hidden></div><button class="settings-trigger" id="open-auth" type="button">🔐 登入</button><button class="settings-trigger" id="open-gallery" type="button">🌐 作品頁</button><button class="settings-trigger" id="new-post" type="button">＋ 新的一篇</button><button class="settings-trigger" id="open-posts" type="button">📁 我的貼文</button><button class="settings-trigger" id="open-backup" type="button">🧳 備份與還原</button><button class="settings-trigger" id="open-rich-menu" type="button" disabled>📋 圖文選單</button><button class="settings-trigger" id="open-settings" type="button">⚙ 設定</button></div>
     </div>
   </header>
   <div class="intro">
@@ -607,9 +607,32 @@
     </div>
   </dialog>
   <dialog id="posts-dialog" aria-labelledby="posts-title">
-    <div class="dialog-head"><div><h2 id="posts-title">我的貼文</h2><p>保存在這個瀏覽器裡的貼文。可重新打開編輯。</p></div><button class="icon-close" type="button" data-close="posts-dialog" aria-label="關閉我的貼文">×</button></div>
-    <div class="dialog-body"><div class="board" id="post-list"></div><p class="dialog-status" id="posts-status" role="status"></p></div>
+    <div class="dialog-head"><div><h2 id="posts-title">我的貼文</h2><p>保存在這個瀏覽器裡的貼文。可重新打開編輯，登入後也可同步到雲端。</p></div><button class="icon-close" type="button" data-close="posts-dialog" aria-label="關閉我的貼文">×</button></div>
+    <div class="dialog-body"><div class="dialog-actions" style="margin-bottom:12px;"><button class="secondary-action" id="cloud-upload-all" type="button">⬆ 全部上傳到雲端</button><button class="secondary-action" id="cloud-pull-all" type="button">⬇ 從雲端拿回來</button></div><p class="dialog-status" id="posts-status" role="status"></p><div class="board" id="post-list"></div></div>
   </dialog>
+  <dialog id="auth-dialog" aria-labelledby="auth-title">
+    <div class="dialog-head"><div><h2 id="auth-title">雲端登入（Supabase）</h2><p>登入後，存檔與圖片會同時備份到你的 Supabase 雲端。</p></div><button class="icon-close" type="button" data-close="auth-dialog" aria-label="關閉登入視窗">×</button></div>
+    <div class="dialog-body">
+      <div class="field"><label for="auth-email">Email</label><input id="auth-email" type="email" autocomplete="email" placeholder="you@example.com"></div>
+      <div class="field"><label for="auth-password">密碼（至少 6 個字）</label><input id="auth-password" type="password" autocomplete="current-password" placeholder="至少 6 個字"></div>
+      <div class="dialog-actions">
+        <button class="primary-action" id="auth-signin" type="button">登入</button>
+        <button class="secondary-action" id="auth-signup" type="button">第一次：註冊</button>
+        <button class="secondary-action" id="auth-signout" type="button">登出</button>
+        <button class="secondary-action" type="button" data-close="auth-dialog">關閉</button>
+      </div>
+      <p class="dialog-status" id="auth-status" role="status"></p>
+    </div>
+  </dialog>
+  <dialog id="gallery-dialog" aria-labelledby="gallery-title">
+    <div class="dialog-head"><div><h2 id="gallery-title">🌐 公開作品頁</h2><p>不用登入就能查看標記為「公開」的雲端貼文（網址加上 <code>?gallery=1</code> 可直接分享給客人）。</p></div><button class="icon-close" type="button" data-close="gallery-dialog" aria-label="關閉公開作品頁">×</button></div>
+    <div class="dialog-body">
+      <div class="dialog-actions" style="margin-bottom:12px;"><button class="secondary-action" id="refresh-gallery" type="button">重新整理</button><button class="secondary-action" type="button" data-close="gallery-dialog">關閉</button></div>
+      <p class="dialog-status" id="gallery-status" role="status"></p>
+      <div class="board" id="gallery-list"></div>
+    </div>
+  </dialog>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script>
 // LINE 圖文選單核心
 const MENUS = [
@@ -662,10 +685,10 @@ let richMenu=normalizeRichMenu({cells:[{icon:'🎾',label:'認識網咖',content
     }
     function newStudioId() { return globalThis.crypto?.randomUUID?.() || `${Date.now()}-${Math.random()}`; }
     function pictureReferences(item) {
-      return (item.pictures || []).map(({ id, name, width, height, design }) => ({ id, name, width, height, design: normalizeCardDesign(design) }));
+      return (item.pictures || []).map(({ id, name, width, height, design, url }) => ({ id, name, width, height, design: normalizeCardDesign(design), ...(typeof url === 'string' && url ? { url } : {}) }));
     }
     function portablePost(item) {
-      const keys = ['id', 'card', 'type', 'format', 'mainPictureId', 'status', 'posts', 'platform', 'assistantHistories', 'previousPosts', 'imagePrompt', 'cardExportSize', 'name', 'savedAt'];
+      const keys = ['id', 'card', 'publishDate', 'isPublic', 'type', 'format', 'mainPictureId', 'status', 'posts', 'platform', 'assistantHistories', 'previousPosts', 'imagePrompt', 'cardExportSize', 'name', 'savedAt'];
       return { ...Object.fromEntries(keys.filter(key => item[key] !== undefined).map(key => [key, item[key]])), pictures: pictureReferences(item), media: (item.media || []).map(({ id, name, type, size }) => ({ id, name, type, size })) };
     }
     function publicSettings(value) {
@@ -694,7 +717,7 @@ let richMenu=normalizeRichMenu({cells:[{icon:'🎾',label:'認識網咖',content
       return { format: input.format, version: 1, createdAt: input.createdAt, posts, draft: input.draft ? portablePost(input.draft) : null, assets: input.assets.map(asset => ({ id: asset.id, name: typeof asset.name === 'string' ? asset.name : '素材', dataUrl: asset.dataUrl })), settings: publicSettings(input.settings), limits: Object.fromEntries(PLATFORMS.filter(p => Number.isFinite(input.limits?.[p]) && input.limits[p] > 0).map(p => [p, input.limits[p]])), usage: input.usage && typeof input.usage === 'object' ? input.usage : {} };
     }
     function upsertWorkingPost(collection, item) {
-      return [{ ...portablePost(item), name: item.card?.topic?.trim() || '未命名貼文', savedAt: new Date().toISOString() }, ...collection.filter(post => post.id !== item.id)];
+      return [{ ...portablePost(item), name: item.card?.topic?.trim() || '未命名貼文', savedAt: Date.now() }, ...collection.filter(post => post.id !== item.id)];
     }
     function prepareRestore(input, existing, active, makeId = newStudioId) {
       const backup = validateBackup(input);
@@ -850,14 +873,31 @@ let richMenu=normalizeRichMenu({cells:[{icon:'🎾',label:'認識網咖',content
       const pic = pictures.find(pic => pic.id === editingPictureId); if (!pic) return;
       const value = document.getElementById(id).value;
       pic.design = normalizeCardDesign({ ...normalizeCardDesign(pic.design), [key]: key === 'opacity' ? Number(value) : value });
-      updateCardTemplateHint(); renderCardPreview(); renderPreview(); autoSaveDraft();
+      updateCardTemplateHint(); renderCardPreview(); renderPreview(); autoSaveDraft(); scheduleAutoSave();
     });
-    document.getElementById('card-export-size').addEventListener('change', () => { renderCardPreview(); autoSaveDraft(); });
+    document.getElementById('card-export-size').addEventListener('change', () => { renderCardPreview(); autoSaveDraft(); scheduleAutoSave(); });
     document.getElementById('card-apply-all').addEventListener('click', () => {
       pictures = copyCardStyle(pictures, editingPictureId); refreshCardControls(); renderPreview();
       if (autoSaveDraft()) document.getElementById('picture-status').textContent = '已套用樣式，各頁文字與原始底圖保持原樣。';
+      scheduleAutoSave();
     });
     const OPENROUTER_MODEL = 'deepseek/deepseek-v4.1-flash';
+    // 這兩個可以公開，守門的是 Supabase 的 RLS；sb_secret_ 開頭的絕對不要貼
+    const SB_URL = 'https://hiuzsavpywuloeagnhiz.supabase.co';
+    const SB_KEY = 'sb_publishable_7AcqqlDhAi9CfH0TkloEaQ_N8t_aLvi';
+    let sb = null;
+    let sbInitReason = '';
+    if (!SB_URL.trim() || !SB_KEY.trim()) {
+      sbInitReason = 'SB_URL 或 SB_KEY 還沒填';
+    } else if (!window.supabase?.createClient) {
+      sbInitReason = 'Supabase 的程式庫載不到';
+    } else {
+      sb = window.supabase.createClient(SB_URL.trim(), SB_KEY.trim());
+    }
+    let me = null;
+    const autoPulledUserIds = new Set();
+    const cloudPostIds = new Set();
+    let cloudIdsSyncedFor = null;
     // 課堂設定集中在這裡；正式名稱、帳號與主色尚未定案。
     const BRAND = { name: 'CourtMate', account: '帳號名稱待確認' };
     const PLATFORMS = ['FB', 'IG', 'LINE', 'Threads'];
@@ -923,9 +963,13 @@ let richMenu=normalizeRichMenu({cells:[{icon:'🎾',label:'認識網咖',content
       }
       fieldHost.append(wrapper);
     });
+    const publishDateWrapper = document.createElement('div');
+    publishDateWrapper.className = 'field';
+    publishDateWrapper.innerHTML = '<label class="field-label" for="publish-date"><span class="field-number">📅</span>預計發佈日<span class="field-hint">排程日曆用，可先留空</span></label><input id="publish-date" type="date"><label style="display:inline-flex;align-items:center;gap:6px;margin-top:8px;font-weight:normal;cursor:pointer;"><input id="post-public" type="checkbox"> 🌐 公開到作品頁（存檔上雲後，未登入客人也看得到）</label>';
+    fieldHost.append(publishDateWrapper);
     const promptAction = document.createElement('div');
     promptAction.className = 'action-row';
-    promptAction.innerHTML = '<button class="primary-action" id="generate-ai" type="button">✨ 讓 AI 寫</button><p class="form-message" id="ai-status" role="status" aria-live="polite"></p><p class="dialog-status" id="ai-usage" role="status"></p><div class="ask-box" id="ai-questions" hidden></div><textarea id="ai-raw" aria-label="AI 原始回覆，可複製後用貼回功能處理" readonly hidden></textarea><div class="dialog-actions"><button class="primary-action" id="build-prompt" type="button">🧩 組好指令</button><button class="secondary-action" id="open-import" type="button">📥 貼回 AI 寫好的</button><button class="secondary-action" id="save-post" type="button">💾 存檔</button></div><p class="form-message" id="prompt-error" role="status"></p><p class="dialog-status" id="storage-status" role="status"></p>';
+    promptAction.innerHTML = '<button class="primary-action" id="generate-ai" type="button">✨ 讓 AI 寫</button><p class="form-message" id="ai-status" role="status" aria-live="polite"></p><p class="dialog-status" id="ai-usage" role="status"></p><div class="ask-box" id="ai-questions" hidden></div><textarea id="ai-raw" aria-label="AI 原始回覆，可複製後用貼回功能處理" readonly hidden></textarea><div class="dialog-actions"><button class="primary-action" id="build-prompt" type="button">🧩 組好指令</button><button class="secondary-action" id="open-import" type="button">📥 貼回 AI 寫好的</button><button class="secondary-action" id="save-post" type="button">💾 存檔</button></div><p class="form-message" id="prompt-error" role="status"></p><p class="dialog-status" id="storage-status" role="status"></p><p class="dialog-status" id="cloud-status" role="status"></p>';
     fieldHost.append(promptAction);
     const tabHost = document.getElementById('platform-tabs');
     tabHost.addEventListener('click', () => renderCardPreview());
@@ -1156,7 +1200,7 @@ let richMenu=normalizeRichMenu({cells:[{icon:'🎾',label:'認識網咖',content
       });
     }
     function restorePictures(item) {
-      pictures = Array.isArray(item.pictures) ? item.pictures.filter(pic => pic && typeof pic.id === 'string' && (pic.dataUrl === undefined || typeof pic.dataUrl === 'string' && /^data:image\/jpeg;base64,[A-Za-z0-9+/=\s]+$/.test(pic.dataUrl))).map(pic => ({ id: pic.id, name: typeof pic.name === 'string' ? pic.name : '圖片', dataUrl: pic.dataUrl, width: Number(pic.width) || 0, height: Number(pic.height) || 0, design: normalizeCardDesign(pic.design) })) : [];
+      pictures = Array.isArray(item.pictures) ? item.pictures.filter(pic => pic && typeof pic.id === 'string' && (pic.dataUrl === undefined || typeof pic.dataUrl === 'string' && /^data:image\/jpeg;base64,[A-Za-z0-9+/=\s]+$/.test(pic.dataUrl))).map(pic => ({ id: pic.id, name: typeof pic.name === 'string' ? pic.name : '圖片', dataUrl: pic.dataUrl, ...(typeof pic.url === 'string' && pic.url ? { url: pic.url } : {}), width: Number(pic.width) || 0, height: Number(pic.height) || 0, design: normalizeCardDesign(pic.design) })) : [];
       mainPictureId = pictures.some(pic => pic.id === item.mainPictureId) ? item.mainPictureId : pictures[0]?.id || null;
       renderPictures();
     }
@@ -1169,9 +1213,22 @@ let richMenu=normalizeRichMenu({cells:[{icon:'🎾',label:'認識網咖',content
         try {
           const record = await readMediaRecord(pic.id);
           if (version !== pictureHydrationVersion || context !== postContextVersion) return;
-          if (record?.dataUrl) pic.dataUrl = record.dataUrl;
-          else missing.push(pic.name);
-        } catch (_) { missing.push(pic.name); }
+          if (record?.dataUrl) {
+            pic.dataUrl = record.dataUrl;
+            continue;
+          }
+          if (pic.url) {
+            const response = await fetch(pic.url);
+            if (!response.ok) throw new Error('download failed');
+            const blob = await response.blob();
+            const dataUrl = await blobAsDataURL(blob);
+            if (version !== pictureHydrationVersion || context !== postContextVersion) return;
+            pic.dataUrl = dataUrl;
+            await writeMediaRecord({ id: pic.id, name: pic.name, dataUrl, width: pic.width, height: pic.height }).catch(() => {});
+            continue;
+          }
+          missing.push(pic.name);
+        } catch (_) { if (!pic.url) missing.push(pic.name); }
       }
       if (version !== pictureHydrationVersion || context !== postContextVersion) return;
       renderPictures(); renderPreview();
@@ -1179,12 +1236,30 @@ let richMenu=normalizeRichMenu({cells:[{icon:'🎾',label:'認識網咖',content
     }
     function selectMainPicture(id) {
       if (!pictures.some(pic => pic.id === id)) return;
-      mainPictureId = id; editingPictureId = id; pictureSlide = 0; renderPictures(); renderPreview(); autoSaveDraft();
+      mainPictureId = id; editingPictureId = id; pictureSlide = 0; renderPictures(); renderPreview(); autoSaveDraft(); scheduleAutoSave();
     }
-    function deletePicture(id) {
+    async function deletePicture(id) {
+      const targetPic = pictures.find(pic => pic.id === id);
       pictures = pictures.filter(pic => pic.id !== id);
       if (!pictures.some(pic => pic.id === mainPictureId)) mainPictureId = pictures[0]?.id || null;
-      pictureSlide = 0; renderPictures(); renderPreview(); if (autoSaveDraft() !== false) pruneMediaFiles().catch(() => {});
+      pictureSlide = 0; renderPictures(); renderPreview();
+      if (autoSaveDraft() !== false) pruneMediaFiles().catch(() => {});
+      scheduleAutoSave();
+      if (sb && me && targetPic?.url) {
+        const stillUsed = savedPosts.some(post => post.id !== currentSavedId && (post.pictures || []).some(pic => pic.id === targetPic.id || pic.url === targetPic.url));
+        if (!stillUsed) {
+          const statusEl = document.getElementById('picture-status');
+          const filename = decodeURIComponent(String(targetPic.url).split('/').pop().split('?')[0]);
+          const path = `${me.id}/${filename}`;
+          try {
+            const { error } = await sb.storage.from('images').remove([path]);
+            if (error) throw error;
+            statusEl.textContent = `已刪除圖片（雲端也已移除：${targetPic.name}）。`;
+          } catch (error) {
+            statusEl.textContent = `這台已刪除圖片，但雲端刪除失敗：${translateCloudError(error)}`;
+          }
+        }
+      }
     }
     function renderPictures() {
       const host = document.getElementById('picture-list'); host.replaceChildren();
@@ -1193,7 +1268,8 @@ let richMenu=normalizeRichMenu({cells:[{icon:'🎾',label:'認識網咖',content
         const select = node('button', 'picture-select'); select.type = 'button';
         select.setAttribute('aria-label', `選第 ${index + 1} 張為主圖：${pic.name}`);
         select.setAttribute('aria-pressed', String(pic.id === mainPictureId));
-        const image = node('img'); if (pic.dataUrl) image.src = pic.dataUrl; image.alt = pic.dataUrl ? pic.name : `${pic.name}（載入中或檔案遺失）`; select.append(image);
+        const picSrc = pic.dataUrl || pic.url || '';
+        const image = node('img'); if (picSrc) image.src = picSrc; image.alt = picSrc ? pic.name : `${pic.name}（載入中或檔案遺失）`; select.append(image);
         select.addEventListener('click', () => selectMainPicture(pic.id));
         const remove = node('button', 'picture-remove', '×'); remove.type = 'button'; remove.setAttribute('aria-label', `刪除第 ${index + 1} 張：${pic.name}`);
         remove.addEventListener('click', () => deletePicture(pic.id));
@@ -1203,7 +1279,7 @@ let richMenu=normalizeRichMenu({cells:[{icon:'🎾',label:'認識網咖',content
         for (const [label, delta] of [['←', -1], ['→', 1]]) {
           const button = node('button', '', label); button.type = 'button'; button.disabled = index + delta < 0 || index + delta >= pictures.length;
           button.setAttribute('aria-label', `將圖片「${pic.name}」${delta < 0 ? '往前' : '往後'}移`);
-          button.addEventListener('click', () => { const [pic] = pictures.splice(index, 1); pictures.splice(index + delta, 0, pic); pictureSlide = 0; renderPictures(); renderPreview(); autoSaveDraft(); }); order.append(button);
+          button.addEventListener('click', () => { const [pic] = pictures.splice(index, 1); pictures.splice(index + delta, 0, pic); pictureSlide = 0; renderPictures(); renderPreview(); autoSaveDraft(); scheduleAutoSave(); }); order.append(button);
         }
         wrapper.append(order);
         host.append(wrapper);
@@ -1224,9 +1300,10 @@ let richMenu=normalizeRichMenu({cells:[{icon:'🎾',label:'認識網咖',content
       const ordered = [pictures.find(item => item.id === mainPictureId), ...pictures.filter(item => item.id !== mainPictureId)].filter(Boolean);
       const carousel = format === '輪播' && ordered.length > 1;
       const pic = carousel ? ordered[pictureSlide % ordered.length] : ordered[0];
-      if (!pic?.dataUrl) return null;
+      const picSrc = pic?.dataUrl || pic?.url;
+      if (!picSrc) return null;
       const frame = node('div', 'post-picture-frame'); frame.style.aspectRatio = PIC_SIZE[platform].join(' / ');
-      const image = node('img'); image.src = pic.dataUrl; image.alt = pic.name;
+      const image = node('img'); image.src = picSrc; image.alt = pic.name;
       image.style.width = '100%'; image.style.height = '100%'; image.style.objectFit = 'cover';
       frame.append(image);
       if (normalizeCardDesign(pic.design).text.trim()) {
@@ -1292,7 +1369,10 @@ let richMenu=normalizeRichMenu({cells:[{icon:'🎾',label:'認識網咖',content
             renderPictures(); renderPreview(); if (!autoSaveDraft()) errors.push('素材已在倉庫，但貼文暫存失敗。請保留此頁並下載備份。');
           } catch (error) { if (contextVersion !== postContextVersion) return; errors.push(error.message); }
         }
-        if (contextVersion === postContextVersion) status.textContent = [added ? `已加入 ${added} 個素材。圖片點縮圖可換主圖；影片請選「影片」。` : '', ...errors].filter(Boolean).join('\n');
+        if (contextVersion === postContextVersion) {
+          status.textContent = [added ? `已加入 ${added} 個素材。圖片點縮圖可換主圖；影片請選「影片」。` : '', ...errors].filter(Boolean).join('\n');
+          if (added) scheduleAutoSave();
+        }
       } finally { mediaProcessing = false; button.disabled = false; refreshWarehouseUsage().catch(() => {}); }
     }
     // 綁定這篇的圖
@@ -1371,7 +1451,9 @@ let richMenu=normalizeRichMenu({cells:[{icon:'🎾',label:'認識網咖',content
       if (contextVersion !== postContextVersion) return { skipped: true };
       pictures.push(pic); mainPictureId = pic.id; formatSelect.value = '單圖';
       renderPictures(); renderPreview();
-      return { saved: autoSaveDraft(), skipped: false };
+      const saved = autoSaveDraft();
+      scheduleAutoSave();
+      return { saved, skipped: false };
     }
     async function generatePostImage() {
       if (imageGenerating || aiBusy || mediaProcessing || deliveryBusy) return;
@@ -1581,11 +1663,12 @@ let richMenu=normalizeRichMenu({cells:[{icon:'🎾',label:'認識網咖',content
       updateCharacterCount();
       autoSaveDraft();
       refreshReviewState();
+      scheduleAutoSave();
     });
     document.getElementById('topic').addEventListener('input', renderPreview);
     document.getElementById('visual').addEventListener('input', renderPreview);
-    fieldHost.addEventListener('input', autoSaveDraft);
-    fieldHost.addEventListener('change', autoSaveDraft);
+    fieldHost.addEventListener('input', () => { autoSaveDraft(); scheduleAutoSave(); });
+    fieldHost.addEventListener('change', () => { autoSaveDraft(); scheduleAutoSave(); });
     fieldHost.addEventListener('input', refreshReviewState);
     fieldHost.addEventListener('change', refreshReviewState);
     fieldHost.addEventListener('submit', event => event.preventDefault());
@@ -2386,11 +2469,43 @@ let richMenu=normalizeRichMenu({cells:[{icon:'🎾',label:'認識網咖',content
       }
     }
 
+    const publishDateInput = document.getElementById('publish-date');
+    const postPublicInput = document.getElementById('post-public');
+    const cloudStatus = document.getElementById('cloud-status');
+    const autosaveStatus = document.getElementById('autosave-status');
+    let autoSaveTimer = null;
+
+    function clearAutoSaveTimer() {
+      if (autoSaveTimer) { clearTimeout(autoSaveTimer); autoSaveTimer = null; }
+    }
+
+    function scheduleAutoSave() {
+      clearAutoSaveTimer();
+      if (aiBusy || imageGenerating) return;
+      autoSaveTimer = setTimeout(async () => {
+        autoSaveTimer = null;
+        if (aiBusy || imageGenerating) return;
+        if (!document.getElementById('topic').value.trim()) return;
+        const ok = await performSave({ silentNoTopic: true, isAuto: true });
+        if (ok) {
+          const hhmm = new Date().toLocaleTimeString('zh-TW', { hour12: false, hour: '2-digit', minute: '2-digit' });
+          autosaveStatus.textContent = `已自動存檔 ${hhmm}`;
+          autosaveStatus.hidden = false;
+        }
+      }, 5000);
+    }
+
+    publishDateInput.addEventListener('input', () => { autoSaveDraft(); scheduleAutoSave(); });
+    publishDateInput.addEventListener('change', () => { autoSaveDraft(); scheduleAutoSave(); });
+    postPublicInput.addEventListener('change', () => { autoSaveDraft(); scheduleAutoSave(); });
+
     function capturePost() {
       posts[currentPlatform] = editor.value;
       return {
         id: currentSavedId,
         card: Object.fromEntries(FIELDS.map(field => [field.id, document.getElementById(field.id).value])),
+        publishDate: publishDateInput.value || '',
+        isPublic: Boolean(postPublicInput.checked),
         type: document.getElementById('post-type').value,
         format: formatSelect.value,
         pictures: pictureReferences({ pictures }),
@@ -2422,6 +2537,7 @@ let richMenu=normalizeRichMenu({cells:[{icon:'🎾',label:'認識網咖',content
     }
 
     function applyPost(item) {
+      clearAutoSaveTimer();
       postContextVersion++;
       resetReview();
       assistantHistories = normalizeAssistantHistories(item.assistantHistories);
@@ -2431,6 +2547,8 @@ let richMenu=normalizeRichMenu({cells:[{icon:'🎾',label:'認識網咖',content
       document.getElementById('assistant-result').value = '';
       document.getElementById('assistant-result').hidden = true;
       FIELDS.forEach(field => { document.getElementById(field.id).value = item.card?.[field.id] || ''; });
+      publishDateInput.value = typeof item.publishDate === 'string' ? item.publishDate : '';
+      postPublicInput.checked = Boolean(item.isPublic);
       document.getElementById('post-type').value = POST_TYPES.includes(item.type) ? item.type : POST_TYPES[0];
       PLATFORMS.forEach(platform => { posts[platform] = item.posts?.[platform] || ''; });
       document.getElementById('card-export-size').value = Object.hasOwn(SIZES, item.cardExportSize) ? item.cardExportSize : 'platform';
@@ -2469,16 +2587,187 @@ let richMenu=normalizeRichMenu({cells:[{icon:'🎾',label:'認識網咖',content
       return `${date}｜${item.card.topic.trim() || '未命名貼文'}`;
     }
 
-    document.getElementById('save-post').addEventListener('click', () => {
+    function savedAtMs(item) {
+      if (typeof item?.savedAt === 'number' && Number.isFinite(item.savedAt)) return item.savedAt;
+      const parsed = Date.parse(item?.savedAt || '');
+      return Number.isFinite(parsed) ? parsed : 0;
+    }
+
+    function sortSavedPosts(collection) {
+      return [...collection].sort((a, b) => {
+        const diff = savedAtMs(b) - savedAtMs(a);
+        if (diff !== 0) return diff;
+        return String(b.id || '').localeCompare(String(a.id || ''));
+      });
+    }
+
+    function translateAuthError(error) {
+      const msg = String(error?.message || error || '');
+      const lower = msg.toLowerCase();
+      if (lower.includes('invalid login credentials')) return 'Email 或密碼不對';
+      if (lower.includes('user already registered')) return '這個 Email 註冊過了，直接按「登入」';
+      if (lower.includes('email not confirmed')) return '到 Supabase 把 Confirm email 關掉';
+      if (lower.includes('password should be at least') || lower.includes('密碼太短')) return '密碼至少 6 個字';
+      if (lower.includes('rate limit')) return '試太多次了，等 1 分鐘';
+      return msg || '發生未知錯誤';
+    }
+
+    function translateCloudError(error) {
+      const code = String(error?.code || '');
+      const msg = String(error?.message || error || '');
+      const lower = msg.toLowerCase();
+      if (code === '42P01' || code === 'PGRST205') return '雲端還沒有 posts 表，到 SQL Editor 貼建表那段按 Run';
+      if (lower.includes('bucket not found')) return '雲端還沒有 images 桶子，到 SQL Editor 貼圖片那段按 Run';
+      if (code === '42501' || lower.includes('row-level security')) {
+        return lower.includes('storage') || lower.includes('object') ? '雲端不讓你傳圖，SQL 的圖片權限那段沒跑到' : '雲端不讓你存，SQL 的權限那段沒跑到';
+      }
+      return msg || '雲端連線失敗';
+    }
+
+    async function uploadPostPicturesToCloud(item) {
+      let uploadedCount = 0;
+      if (!sb || !me || !Array.isArray(item.pictures) || !item.pictures.length) return { item, uploadedCount };
+      const nextPictures = [];
+      let changed = false;
+      for (const pic of item.pictures) {
+        if (pic.url) { nextPictures.push(pic); continue; }
+        let dataUrl = (item.id === currentSavedId ? pictures.find(p => p.id === pic.id)?.dataUrl : null) || pic.dataUrl;
+        if (!dataUrl) {
+          const record = await readMediaRecord(pic.id).catch(() => null);
+          dataUrl = record?.dataUrl || '';
+        }
+        if (!dataUrl) { nextPictures.push(pic); continue; }
+        const blob = await (await fetch(dataUrl)).blob();
+        const mime = blob.type || 'image/jpeg';
+        const ext = mime.includes('png') ? 'png' : mime.includes('webp') ? 'webp' : mime.includes('gif') ? 'gif' : 'jpg';
+        const path = `${me.id}/${pic.id}.${ext}`;
+        const { error: uploadError } = await sb.storage.from('images').upload(path, blob, { upsert: true, contentType: mime });
+        if (uploadError) throw uploadError;
+        const { data: pub } = sb.storage.from('images').getPublicUrl(path);
+        const publicUrl = pub?.publicUrl || '';
+        if (publicUrl) {
+          nextPictures.push({ ...pic, url: publicUrl });
+          uploadedCount++;
+          changed = true;
+          if (item.id === currentSavedId) {
+            const memPic = pictures.find(p => p.id === pic.id);
+            if (memPic) memPic.url = publicUrl;
+          }
+        } else {
+          nextPictures.push(pic);
+        }
+      }
+      if (!changed) return { item, uploadedCount };
+      const updated = { ...item, pictures: nextPictures, savedAt: Date.now() };
+      const nextCollection = savedPosts.map(saved => saved.id === updated.id ? portablePost(updated) : saved);
+      const draft = currentSavedId === updated.id ? capturePost() : null;
+      if (saveWorkspace(nextCollection, draft)) savedPosts = nextCollection;
+      return { item: updated, uploadedCount };
+    }
+
+    async function savePostToCloud(item) {
+      if (!sb || !me) return { ok: false, skipped: true };
+      const { item: syncedItem, uploadedCount } = await uploadPostPicturesToCloud(item);
+      const payload = {
+        id: String(syncedItem.id),
+        user_id: me.id,
+        data: portablePost(syncedItem),
+        publish_date: syncedItem.publishDate || null,
+        is_public: Boolean(syncedItem.isPublic),
+        updated_at: new Date().toISOString()
+      };
+      let { error } = await sb.from('posts').upsert(payload, { onConflict: 'user_id,id' });
+      if (error && /is_public/i.test(String(error.message || ''))) {
+        if (syncedItem.isPublic) throw new Error('雲端還沒有 is_public 欄位，請先到 SQL Editor 執行 SQL_3_公開作品頁.sql.txt');
+        const { is_public: _omit, ...fallbackPayload } = payload;
+        ({ error } = await sb.from('posts').upsert(fallbackPayload, { onConflict: 'user_id,id' }));
+      }
+      if (error) throw error;
+      cloudPostIds.add(String(syncedItem.id));
+      return { ok: true, uploadedCount, item: syncedItem };
+    }
+
+    async function syncCloudPostIds() {
+      if (!sb || !me || cloudIdsSyncedFor === me.id) return;
+      const { data, error } = await sb.from('posts').select('id');
+      if (error || !Array.isArray(data)) return;
+      cloudPostIds.clear();
+      data.forEach(row => { if (row?.id) cloudPostIds.add(String(row.id)); });
+      cloudIdsSyncedFor = me.id;
+    }
+
+    async function pullPostsFromCloud({ silentIfEmpty = false } = {}) {
+      if (!sb || !me) return { ok: false, reason: '先 🔐 登入' };
+      const { data, error } = await sb.from('posts').select('id, data, updated_at');
+      if (error) throw error;
+      const rows = Array.isArray(data) ? data : [];
+      cloudPostIds.clear();
+      let added = 0;
+      let updated = 0;
+      const map = new Map(savedPosts.map(item => [String(item.id), item]));
+      for (const row of rows) {
+        const remote = row?.data;
+        if (!remote || !remote.id) continue;
+        const id = String(remote.id);
+        cloudPostIds.add(id);
+        const local = map.get(id);
+        if (!local) {
+          map.set(id, portablePost(remote));
+          added++;
+        } else if (savedAtMs(remote) > savedAtMs(local)) {
+          map.set(id, portablePost(remote));
+          updated++;
+        }
+      }
+      cloudIdsSyncedFor = me.id;
+      const merged = sortSavedPosts(Array.from(map.values()));
+      if (added > 0 || updated > 0) {
+        const active = currentSavedId ? map.get(String(currentSavedId)) : null;
+        if (saveWorkspace(merged, active || capturePost())) {
+          savedPosts = merged;
+          if (active && currentSavedId === active.id) applyPost(active);
+        }
+      }
+      if (postsDialog.open) renderSavedPosts();
+      if (!silentIfEmpty || added > 0 || updated > 0) {
+        document.getElementById('posts-status').textContent = `拿回來了：新增 ${added} 篇、更新 ${updated} 篇`;
+      }
+      return { ok: true, added, updated };
+    }
+
+    async function performSave({ silentNoTopic = false, isAuto = false } = {}) {
       const item = capturePost();
       if (!item.card.topic.trim()) {
-        storageStatus.textContent = '請先填第一格「這篇要說什麼」，再存檔。';
-        document.getElementById('topic').focus();
-        return;
+        if (!silentNoTopic) {
+          storageStatus.textContent = '請先填第一格「這篇要說什麼」，再存檔。';
+          document.getElementById('topic').focus();
+        }
+        return false;
       }
       const draftSaved = autoSaveDraft();
-      if (draftSaved) storageStatus.textContent = `已存檔：${postName(item)}`;
-    });
+      if (!draftSaved) return false;
+      const savedItem = savedPosts.find(saved => saved.id === currentSavedId) || { ...item, id: currentSavedId, savedAt: Date.now() };
+      storageStatus.textContent = `已存檔：${postName(savedItem)}`;
+      cloudStatus.classList.remove('storage-error');
+      if (!sb || !me) {
+        cloudStatus.textContent = '只存在這台電腦。🔐 登入以後，會同時存到雲端';
+        return true;
+      }
+      if (!isAuto) cloudStatus.textContent = '正在存到雲端…';
+      try {
+        const result = await savePostToCloud(savedItem);
+        const imgNote = result.uploadedCount > 0 ? `（傳了 ${result.uploadedCount} 張圖）` : '';
+        cloudStatus.textContent = `☁ 雲端也存了：${postName(savedItem)}${imgNote}`;
+        if (postsDialog.open) renderSavedPosts();
+        return true;
+      } catch (error) {
+        cloudStatus.classList.add('storage-error');
+        cloudStatus.textContent = `${translateCloudError(error)}。這台電腦有存到，不會不見`;
+        return false;
+      }
+    }
+
+    document.getElementById('save-post').addEventListener('click', () => performSave());
 
     function renderSavedPosts() {
       const list = document.getElementById('post-list');
@@ -2491,8 +2780,15 @@ let richMenu=normalizeRichMenu({cells:[{icon:'🎾',label:'認識網咖',content
         items.forEach(item => {
         const row = node('div', 'post-item');
         const description = node('div');
-        description.append(node('strong', '', item.name));
-        description.append(node('small', '', '存檔時間：' + new Date(item.savedAt).toLocaleString('zh-TW', { hour12: false })));
+        const titleRow = node('strong', '', item.name);
+        if (item.isPublic) titleRow.append(' ', node('span', 'field-hint', '🌐 公開'));
+        if (sb && me) {
+          const badge = node('span', 'field-hint', cloudPostIds.has(String(item.id)) ? '☁ 雲端有' : '只在這台');
+          titleRow.append(' ', badge);
+        }
+        description.append(titleRow);
+        const dateNote = item.publishDate ? `｜📅 ${item.publishDate}` : '';
+        description.append(node('small', '', '存檔時間：' + new Date(item.savedAt).toLocaleString('zh-TW', { hour12: false }) + dateNote));
         const actions = node('div', 'post-item-actions');
         const stateSelect = node('select');
         stateSelect.setAttribute('aria-label', `「${item.name}」的狀態`);
@@ -2517,15 +2813,27 @@ let richMenu=normalizeRichMenu({cells:[{icon:'🎾',label:'認識網咖',content
         });
         const remove = node('button', 'secondary-action danger-action', '刪除');
         remove.type = 'button';
-        remove.addEventListener('click', () => {
-          if (!confirm(`確定刪除「${item.name}」嗎？這個瀏覽器中的存檔會被移除。`)) return;
+        remove.addEventListener('click', async () => {
+          const confirmMsg = sb && me ? `確定刪除「${item.name}」嗎？雲端的也會一起刪。` : `確定刪除「${item.name}」嗎？這個瀏覽器中的存檔會被移除。`;
+          if (!confirm(confirmMsg)) return;
           const next = savedPosts.filter(saved => saved.id !== item.id);
           if (!saveWorkspace(next, currentSavedId === item.id ? { card: {}, posts: {}, pictures: [], media: [], platform: 'IG' } : capturePost())) return;
           savedPosts = next;
           if (currentSavedId === item.id) {
             applyPost({ card: {}, posts: {}, pictures: [], media: [], platform: 'IG' });
           }
-          document.getElementById('posts-status').textContent = `已刪除：${item.name}`;
+          if (sb && me) {
+            try {
+              const { error } = await sb.from('posts').delete().eq('id', String(item.id));
+              if (error) throw error;
+              cloudPostIds.delete(String(item.id));
+              document.getElementById('posts-status').textContent = `已刪除：${item.name}（雲端也刪了）`;
+            } catch (error) {
+              document.getElementById('posts-status').textContent = `這台已刪除「${item.name}」，但雲端刪除失敗：${translateCloudError(error)}`;
+            }
+          } else {
+            document.getElementById('posts-status').textContent = `已刪除：${item.name}`;
+          }
           renderSavedPosts();
           pruneMediaFiles().catch(() => {});
         });
@@ -2539,19 +2847,225 @@ let richMenu=normalizeRichMenu({cells:[{icon:'🎾',label:'認識網咖',content
 
     function hasContent() {
       return FIELDS.some(field => document.getElementById(field.id).value.trim()) ||
+        publishDateInput.value.trim().length > 0 || postPublicInput.checked ||
         PLATFORMS.some(platform => posts[platform].trim()) || editor.value.trim() || mediaItems.length > 0 || pictures.length > 0 || document.getElementById('image-prompt').value.trim().length > 0;
     }
 
-    document.getElementById('open-posts').addEventListener('click', () => {
+    const galleryDialog = document.getElementById('gallery-dialog');
+    const galleryStatus = document.getElementById('gallery-status');
+    const galleryList = document.getElementById('gallery-list');
+
+    async function loadPublicGallery() {
+      galleryList.replaceChildren();
+      if (!sb) { galleryStatus.textContent = `還沒接雲端：${sbInitReason}`; return; }
+      galleryStatus.textContent = '載入公開作品中…';
+      try {
+        const { data, error } = await sb.from('posts').select('id, data, publish_date, updated_at').eq('is_public', true).order('publish_date', { ascending: false, nullsFirst: false });
+        if (error) {
+          if (/is_public/i.test(String(error.message || ''))) throw new Error('雲端尚未設定公開作品頁，請執行 SQL_3_公開作品頁.sql.txt');
+          throw error;
+        }
+        const rows = Array.isArray(data) ? data : [];
+        if (!rows.length) { galleryStatus.textContent = '目前還沒有公開的貼文。'; return; }
+        galleryStatus.textContent = `共有 ${rows.length} 篇公開貼文`;
+        rows.forEach(row => {
+          const item = row.data || {};
+          const card = node('section', 'board-column');
+          const title = item.card?.topic?.trim() || item.name || '未命名作品';
+          const dateLabel = row.publish_date || item.publishDate || item.card?.date || '';
+          card.append(node('h3', '', `${title}${dateLabel ? `（📅 ${dateLabel}）` : ''}`));
+          const pics = (item.pictures || []).filter(pic => pic?.url);
+          if (pics.length) {
+            const strip = node('div', 'media-controls');
+            strip.style.flexWrap = 'wrap';
+            strip.style.gap = '8px';
+            pics.forEach(pic => {
+              const img = node('img');
+              img.src = pic.url;
+              img.alt = pic.name || title;
+              img.style.maxWidth = '180px';
+              img.style.maxHeight = '180px';
+              img.style.borderRadius = '8px';
+              img.style.objectFit = 'cover';
+              strip.append(img);
+            });
+            card.append(strip);
+          }
+          const copyEntries = PLATFORMS.map(p => [p, (item.posts?.[p] || '').trim()]).filter(([, text]) => text);
+          if (copyEntries.length) {
+            copyEntries.forEach(([platform, text]) => {
+              const box = node('div', 'post-item');
+              const content = node('div');
+              content.append(node('strong', '', `【${platform}】`), node('p', '', text));
+              box.append(content);
+              card.append(box);
+            });
+          } else {
+            card.append(node('p', 'empty-list', '（尚無文案內容）'));
+          }
+          galleryList.append(card);
+        });
+      } catch (error) {
+        galleryStatus.textContent = `載入失敗：${translateCloudError(error)}`;
+      }
+    }
+
+    document.getElementById('open-gallery').addEventListener('click', () => {
+      galleryDialog.showModal();
+      loadPublicGallery();
+    });
+    document.getElementById('refresh-gallery').addEventListener('click', loadPublicGallery);
+    if (new URLSearchParams(location.search).get('gallery') === '1') {
+      galleryDialog.showModal();
+      loadPublicGallery();
+    }
+
+    document.getElementById('open-posts').addEventListener('click', async () => {
       document.getElementById('posts-status').textContent = '';
+      await syncCloudPostIds().catch(() => {});
       renderSavedPosts();
       postsDialog.showModal();
+    });
+    document.getElementById('cloud-upload-all').addEventListener('click', async () => {
+      const statusEl = document.getElementById('posts-status');
+      if (!sb || !me) { statusEl.textContent = '先 🔐 登入'; return; }
+      if (!savedPosts.length) { statusEl.textContent = '目前沒有貼文可以上傳。'; return; }
+      let uploaded = 0;
+      for (let index = 0; index < savedPosts.length; index++) {
+        statusEl.textContent = `正在上傳第 ${index + 1} / ${savedPosts.length} 篇…`;
+        try {
+          await savePostToCloud(savedPosts[index]);
+          uploaded++;
+        } catch (error) {
+          statusEl.textContent = `第 ${index + 1} 篇上傳失敗：${translateCloudError(error)}`;
+          renderSavedPosts();
+          return;
+        }
+      }
+      statusEl.textContent = `上傳好了：${uploaded} 篇`;
+      renderSavedPosts();
+    });
+    document.getElementById('cloud-pull-all').addEventListener('click', async () => {
+      const statusEl = document.getElementById('posts-status');
+      if (!sb || !me) { statusEl.textContent = '先 🔐 登入'; return; }
+      statusEl.textContent = '正在從雲端拿回來…';
+      try {
+        await pullPostsFromCloud();
+      } catch (error) {
+        statusEl.textContent = `拿回來失敗：${translateCloudError(error)}`;
+      }
     });
     document.getElementById('new-post').addEventListener('click', () => {
       if (hasContent() && !autoSaveDraft()) return;
       applyPost({ card: {}, type: POST_TYPES[0], posts: {}, platform: 'IG' });
       if (autoSaveDraft()) storageStatus.textContent = '已開始新的一篇，上一篇保留在「我的貼文」。';
     });
+
+    const authDialog = document.getElementById('auth-dialog');
+    const openAuthBtn = document.getElementById('open-auth');
+    const authEmailInput = document.getElementById('auth-email');
+    const authPasswordInput = document.getElementById('auth-password');
+    const authStatus = document.getElementById('auth-status');
+
+    function updateAuthUI() {
+      openAuthBtn.textContent = me ? `☁ ${me.email}` : '🔐 登入';
+      if (!sb) {
+        authStatus.textContent = `還沒接雲端：${sbInitReason}`;
+      } else if (me) {
+        authStatus.textContent = `已登入：${me.email}`;
+      }
+    }
+
+    openAuthBtn.addEventListener('click', () => {
+      updateAuthUI();
+      if (sb && !me) authStatus.textContent = '';
+      authDialog.showModal();
+    });
+
+    document.getElementById('auth-signin').addEventListener('click', async () => {
+      if (!sb) { authStatus.textContent = `還沒接雲端：${sbInitReason}`; return; }
+      const email = authEmailInput.value.trim();
+      const password = authPasswordInput.value;
+      if (!email) { authStatus.textContent = '請輸入 Email'; return; }
+      if (password.length < 6) { authStatus.textContent = '密碼至少 6 個字'; return; }
+      authStatus.textContent = '登入中…';
+      const { data, error } = await sb.auth.signInWithPassword({ email, password });
+      if (error) { authStatus.textContent = translateAuthError(error); return; }
+      me = data.user || null;
+      updateAuthUI();
+    });
+
+    document.getElementById('auth-signup').addEventListener('click', async () => {
+      if (!sb) { authStatus.textContent = `還沒接雲端：${sbInitReason}`; return; }
+      const email = authEmailInput.value.trim();
+      const password = authPasswordInput.value;
+      if (!email) { authStatus.textContent = '請輸入 Email'; return; }
+      if (password.length < 6) { authStatus.textContent = '密碼至少 6 個字'; return; }
+      authStatus.textContent = '註冊中…';
+      const { data, error } = await sb.auth.signUp({ email, password });
+      if (error) { authStatus.textContent = translateAuthError(error); return; }
+      if (!data.session) {
+        authStatus.textContent = 'Supabase 的 Confirm email 還開著，關掉再按登入';
+        return;
+      }
+      me = data.user || null;
+      updateAuthUI();
+    });
+
+    async function clearLocalPostsAndMedia() {
+      savedPosts = [];
+      currentSavedId = null;
+      [WORKSPACE_KEY, POSTS_KEY, DRAFT_KEY].forEach(key => localStorage.removeItem(key));
+      workspaceRevision = 0;
+      const database = await mediaDbPromise;
+      if (database) {
+        await new Promise(resolve => {
+          try {
+            const tx = database.transaction('files', 'readwrite');
+            tx.objectStore('files').clear();
+            tx.oncomplete = tx.onerror = tx.onabort = resolve;
+          } catch (_) { resolve(); }
+        });
+      }
+      applyPost({ card: {}, type: POST_TYPES[0], posts: {}, platform: 'IG' });
+      updatePictureStorage(true);
+      refreshWarehouseUsage().catch(() => {});
+    }
+
+    document.getElementById('auth-signout').addEventListener('click', async () => {
+      if (!sb) { authStatus.textContent = `還沒接雲端：${sbInitReason}`; return; }
+      await sb.auth.signOut();
+      me = null;
+      cloudPostIds.clear();
+      cloudIdsSyncedFor = null;
+      updateAuthUI();
+      authStatus.textContent = '已登出';
+      if (confirm('要把這台電腦上的貼文也清掉嗎？借別人的電腦用，請按確定；自己的電腦按取消。')) {
+        await clearLocalPostsAndMedia();
+        authStatus.textContent = '已登出，並清掉這台電腦的貼文與圖片（⚙ 設定保留）';
+      }
+    });
+
+    if (sb) {
+      sb.auth.getSession().then(({ data }) => {
+        me = data?.session?.user || null;
+        updateAuthUI();
+        if (me && !autoPulledUserIds.has(me.id)) {
+          autoPulledUserIds.add(me.id);
+          pullPostsFromCloud({ silentIfEmpty: true }).catch(() => {});
+        }
+      });
+      sb.auth.onAuthStateChange((_event, session) => {
+        me = session?.user || null;
+        updateAuthUI();
+        if (me && !autoPulledUserIds.has(me.id)) {
+          autoPulledUserIds.add(me.id);
+          pullPostsFromCloud({ silentIfEmpty: true }).catch(() => {});
+        }
+      });
+    } else {
+      updateAuthUI();
+    }
 
     function saveWorkspace(collection, draft) {
       if (!storageReady) return false;
