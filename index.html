@@ -404,6 +404,51 @@
       .workflow-workspace.mobile-preview > [role="tabpanel"] { display: none; }
       .workflow-workspace:not(.mobile-preview) > .preview { display: none; }
     }
+    #calendar-dialog { width: min(94vw, 860px); }
+    #calendar-dialog .dialog-body { overflow-x: hidden; }
+    .cal-bar { display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; margin-bottom: 14px; }
+    .cal-month { margin: 0; font-size: 18px; font-weight: 700; color: var(--main-dark); }
+    .cal-nav { display: flex; gap: 8px; flex-wrap: wrap; }
+    .cal-nav button { min-height: 36px; padding: 7px 12px; }
+    .cal-grid { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 6px; width: 100%; }
+    .cal-weekday { text-align: center; font-size: 12px; font-weight: 700; color: var(--muted); padding: 4px 0; min-width: 0; }
+    .cal-cell { min-width: 0; min-height: 86px; background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 6px; display: flex; flex-direction: column; gap: 4px; overflow: hidden; cursor: pointer; transition: border-color .15s ease, background-color .15s ease; }
+    .cal-cell:hover:not(.is-empty) { border-color: var(--main); }
+    .cal-cell.is-empty { background: transparent; border-color: transparent; cursor: default; }
+    .cal-cell.is-today { border: 2px solid var(--main); background: var(--court); }
+    .cal-cell.is-selected { box-shadow: inset 0 0 0 2px var(--main-dark); background: #f3f7ee; }
+    .cal-day-row { display: flex; align-items: center; justify-content: space-between; gap: 2px; font-size: 12px; font-weight: 700; color: var(--ink); }
+    .cal-today-badge { font-size: 10px; font-weight: 700; background: var(--main); color: white; border-radius: 999px; padding: 1px 6px; line-height: 1.4; }
+    .cal-tags { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
+    .cal-tag { display: block; max-width: 100%; min-width: 0; background: #edf3ef; color: var(--main-dark); border-left: 3px solid var(--main); border-radius: 6px; padding: 3px 5px; font-size: 11px; line-height: 1.35; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .cal-tag.is-warn { background: #fff4e5; color: #8a4b00; border-left-color: #d9822b; }
+    .cal-summary { margin: 14px 0 0; font-size: 13px; font-weight: 600; color: var(--main-dark); }
+    .cal-section { margin-top: 16px; padding-top: 14px; border-top: 1px solid var(--line); }
+    .cal-section h4 { margin: 0 0 8px; font-size: 14px; color: var(--main-dark); }
+    .cal-list { display: grid; gap: 8px; }
+    .cal-item { display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 10px 12px; }
+    .cal-item-info { flex: 1 1 200px; min-width: 0; }
+    .cal-item-title { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; font-size: 14px; font-weight: 700; overflow-wrap: anywhere; }
+    .cal-item-meta { margin-top: 3px; font-size: 12px; color: var(--muted); }
+    .cal-warn-badge { display: inline-block; font-size: 11px; font-weight: 700; background: #fff4e5; color: #8a4b00; border: 1px solid #f0c987; border-radius: 999px; padding: 1px 7px; }
+    .cal-item-actions { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+    .cal-item-actions button, .cal-item-actions input[type="date"] { min-height: 36px; padding: 6px 10px; font-size: 12px; }
+    @media (max-width: 690px) {
+      #calendar-dialog { width: calc(100% - 16px); }
+      #calendar-dialog .dialog-body { padding: 14px 10px 18px; }
+      .cal-bar { margin-bottom: 10px; }
+      .cal-month { font-size: 16px; }
+      .cal-nav { gap: 6px; }
+      .cal-nav button { min-height: 34px; padding: 6px 10px; font-size: 12px; }
+      .cal-grid { gap: 3px; }
+      .cal-weekday { font-size: 11px; padding: 2px 0; }
+      .cal-cell { min-height: 62px; border-radius: 8px; padding: 4px 3px; gap: 3px; }
+      .cal-day-row { font-size: 11px; }
+      .cal-today-badge { font-size: 9px; padding: 0 4px; }
+      .cal-tag { font-size: 10px; padding: 2px 3px; border-left-width: 2px; border-radius: 4px; }
+      .cal-item { flex-direction: column; align-items: stretch; }
+      .cal-item-actions { width: 100%; }
+    }
   </style>
 <style>
 #rich-menu-dialog{width:min(96vw,1000px)} .menu-options{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}.menu-cell{display:grid;grid-template-columns:40px 70px 1fr 120px 1.3fr;gap:8px;align-items:center;margin:10px 0}.menu-cell label{margin:0}.menu-cell input,.menu-cell select{min-width:0}#rich-menu-canvas{display:block;width:100%;height:auto;margin:18px 0;border:1px solid var(--line)}.rich-menu-phone{width:100%;display:block}.rich-menu-bar{text-align:center;background:white;padding:10px;font-size:13px}#rich-menu-errors{color:#b42318;white-space:pre-line}#rich-menu-setting-copy{width:100%;min-height:130px}@media(max-width:650px){.menu-options{grid-template-columns:1fr}.menu-cell{grid-template-columns:30px 65px 1fr}.menu-cell select{grid-column:2 / -1}.menu-cell input:last-child{grid-column:2 / -1}}
@@ -415,7 +460,7 @@
         <p class="eyebrow">COURTMATE · SOCIAL STUDIO</p>
         <h1>CourtMate v2 <span>社群貼文工作台</span></h1>
       </div>
-      <div class="top-actions"><div class="status"><strong>保存與交付版</strong> · 本機資料</div><div class="status" id="autosave-status" aria-live="polite" hidden></div><button class="settings-trigger" id="open-auth" type="button">🔐 登入</button><button class="settings-trigger" id="open-gallery" type="button">🌐 作品頁</button><button class="settings-trigger" id="new-post" type="button">＋ 新的一篇</button><button class="settings-trigger" id="open-posts" type="button">📁 我的貼文</button><button class="settings-trigger" id="open-backup" type="button">🧳 備份與還原</button><button class="settings-trigger" id="open-rich-menu" type="button" disabled>📋 圖文選單</button><button class="settings-trigger" id="open-settings" type="button">⚙ 設定</button></div>
+      <div class="top-actions"><div class="status"><strong>保存與交付版</strong> · 本機資料</div><div class="status" id="autosave-status" aria-live="polite" hidden></div><button class="settings-trigger" id="open-auth" type="button">🔐 登入</button><button class="settings-trigger" id="open-gallery" type="button">🌐 作品頁</button><button class="settings-trigger" id="new-post" type="button">＋ 新的一篇</button><button class="settings-trigger" id="open-posts" type="button">📁 我的貼文</button><button class="settings-trigger" id="open-calendar" type="button">📅 日曆</button><button class="settings-trigger" id="open-backup" type="button">🧳 備份與還原</button><button class="settings-trigger" id="open-rich-menu" type="button" disabled>📋 圖文選單</button><button class="settings-trigger" id="open-settings" type="button">⚙ 設定</button></div>
     </div>
   </header>
   <div class="intro">
@@ -609,6 +654,30 @@
   <dialog id="posts-dialog" aria-labelledby="posts-title">
     <div class="dialog-head"><div><h2 id="posts-title">我的貼文</h2><p>保存在這個瀏覽器裡的貼文。可重新打開編輯，登入後也可同步到雲端。</p></div><button class="icon-close" type="button" data-close="posts-dialog" aria-label="關閉我的貼文">×</button></div>
     <div class="dialog-body"><div class="dialog-actions" style="margin-bottom:12px;"><button class="secondary-action" id="cloud-upload-all" type="button">⬆ 全部上傳到雲端</button><button class="secondary-action" id="cloud-pull-all" type="button">⬇ 從雲端拿回來</button></div><p class="dialog-status" id="posts-status" role="status"></p><div class="board" id="post-list"></div></div>
+  </dialog>
+  <dialog id="calendar-dialog" aria-labelledby="calendar-title">
+    <div class="dialog-head"><div><h2 id="calendar-title">📅 貼文日曆</h2><p>點月曆上的一天，就能查看、改期或安排未排程貼文。</p></div><button class="icon-close" type="button" data-close="calendar-dialog" aria-label="關閉貼文日曆">×</button></div>
+    <div class="dialog-body">
+      <div class="cal-bar">
+        <h3 class="cal-month" id="cal-month-label"></h3>
+        <div class="cal-nav">
+          <button class="secondary-action" id="cal-prev" type="button">‹ 上個月</button>
+          <button class="secondary-action" id="cal-today" type="button">今天</button>
+          <button class="secondary-action" id="cal-next" type="button">下個月 ›</button>
+        </div>
+      </div>
+      <div class="cal-grid" id="cal-grid"></div>
+      <p class="cal-summary" id="cal-summary" role="status"></p>
+      <p class="dialog-status" id="cal-action-status" role="status"></p>
+      <section class="cal-section" aria-labelledby="cal-day-heading">
+        <h4 id="cal-day-heading">這一天</h4>
+        <div class="cal-list" id="cal-day-list"></div>
+      </section>
+      <section class="cal-section" aria-labelledby="cal-unscheduled-heading">
+        <h4 id="cal-unscheduled-heading">未排程貼文</h4>
+        <div class="cal-list" id="cal-unscheduled-list"></div>
+      </section>
+    </div>
   </dialog>
   <dialog id="auth-dialog" aria-labelledby="auth-title">
     <div class="dialog-head"><div><h2 id="auth-title">雲端登入（Supabase）</h2><p>登入後，存檔與圖片會同時備份到你的 Supabase 雲端。</p></div><button class="icon-close" type="button" data-close="auth-dialog" aria-label="關閉登入視窗">×</button></div>
@@ -2730,6 +2799,7 @@ let richMenu=normalizeRichMenu({cells:[{icon:'🎾',label:'認識網咖',content
         }
       }
       if (postsDialog.open) renderSavedPosts();
+      if (calendarDialog.open) renderCalendar();
       if (!silentIfEmpty || added > 0 || updated > 0) {
         document.getElementById('posts-status').textContent = `拿回來了：新增 ${added} 篇、更新 ${updated} 篇`;
       }
@@ -2806,12 +2876,7 @@ let richMenu=normalizeRichMenu({cells:[{icon:'🎾',label:'認識網咖',content
         });
         const open = node('button', 'secondary-action', '打開');
         open.type = 'button';
-        open.addEventListener('click', () => {
-          if (hasContent() && !autoSaveDraft()) return;
-          applyPost(item);
-          if (autoSaveDraft()) storageStatus.textContent = `已打開：${item.name}`;
-          postsDialog.close();
-        });
+        open.addEventListener('click', () => openSavedPost(item, postsDialog));
         const remove = node('button', 'secondary-action danger-action', '刪除');
         remove.type = 'button';
         remove.addEventListener('click', async () => {
@@ -2926,6 +2991,230 @@ let richMenu=normalizeRichMenu({cells:[{icon:'🎾',label:'認識網咖',content
       await syncCloudPostIds().catch(() => {});
       renderSavedPosts();
       postsDialog.showModal();
+    });
+
+    function openSavedPost(item, dialogToClose) {
+      if (hasContent() && !autoSaveDraft()) return;
+      applyPost(item);
+      if (autoSaveDraft()) storageStatus.textContent = `已打開：${item.name}`;
+      if (dialogToClose?.open) dialogToClose.close();
+    }
+
+    const calendarDialog = document.getElementById('calendar-dialog');
+    const calMonthLabel = document.getElementById('cal-month-label');
+    const calGrid = document.getElementById('cal-grid');
+    const calSummary = document.getElementById('cal-summary');
+    const calActionStatus = document.getElementById('cal-action-status');
+    const calDayHeading = document.getElementById('cal-day-heading');
+    const calDayList = document.getElementById('cal-day-list');
+    const calUnscheduledList = document.getElementById('cal-unscheduled-list');
+    let calYear = new Date().getFullYear();
+    let calMonth = new Date().getMonth();
+    let selectedCalDate = null;
+
+    function calendarPostLabel(item) {
+      return (item?.card?.topic || '').trim() || item?.name || '未命名貼文';
+    }
+
+    function calendarPostWarnings(item) {
+      const warnings = [];
+      if (!Array.isArray(item?.pictures) || item.pictures.length === 0) warnings.push('缺圖');
+      if (!PLATFORMS.some(p => (item?.posts?.[p] || '').trim().length > 0)) warnings.push('還沒寫');
+      return warnings;
+    }
+
+    function calendarPostPlatforms(item) {
+      const written = PLATFORMS.filter(p => (item?.posts?.[p] || '').trim().length > 0);
+      return written.length ? written.join(' / ') : (item?.platform || '未指定');
+    }
+
+    async function updatePostSchedule(postId, nextDate) {
+      const cleanDate = typeof nextDate === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(nextDate.trim()) ? nextDate.trim() : '';
+      const next = savedPosts.map(saved => saved.id === postId ? { ...saved, publishDate: cleanDate, savedAt: Date.now() } : saved);
+      if (currentSavedId === postId) publishDateInput.value = cleanDate;
+      if (!saveWorkspace(next, capturePost())) return;
+      savedPosts = next;
+      if (cleanDate) selectedCalDate = cleanDate;
+      renderCalendar();
+      if (postsDialog.open) renderSavedPosts();
+
+      const updatedItem = savedPosts.find(saved => saved.id === postId);
+      const label = calendarPostLabel(updatedItem);
+      const actionText = cleanDate ? `已將「${label}」排到 ${cleanDate}` : `已拿掉「${label}」的發佈日`;
+      calActionStatus.classList.remove('storage-error');
+      if (!sb || !me || !updatedItem) {
+        calActionStatus.textContent = actionText;
+        return;
+      }
+      calActionStatus.textContent = `${actionText}，正在同步雲端…`;
+      try {
+        await savePostToCloud(updatedItem);
+        calActionStatus.textContent = `${actionText}（雲端已同步）`;
+      } catch (error) {
+        calActionStatus.classList.add('storage-error');
+        calActionStatus.textContent = `${actionText}，但雲端同步失敗：${translateCloudError(error)}`;
+      }
+    }
+
+    function buildCalendarListItem(item, mode) {
+      const row = node('div', 'cal-item');
+      const info = node('div', 'cal-item-info');
+      const title = node('div', 'cal-item-title');
+      title.append(node('span', '', calendarPostLabel(item)));
+      const warnings = calendarPostWarnings(item);
+      warnings.forEach(w => title.append(node('span', 'cal-warn-badge', `⚠ ${w}`)));
+      info.append(title);
+      info.append(node('div', 'cal-item-meta', `平台：${calendarPostPlatforms(item)}`));
+
+      const actions = node('div', 'cal-item-actions');
+      if (mode === 'day') {
+        const dateInput = node('input');
+        dateInput.type = 'date';
+        dateInput.value = item.publishDate || '';
+        dateInput.setAttribute('aria-label', `「${calendarPostLabel(item)}」的預計發佈日`);
+        dateInput.addEventListener('change', () => updatePostSchedule(item.id, dateInput.value));
+        const unscheduleBtn = node('button', 'secondary-action', '拿掉日子');
+        unscheduleBtn.type = 'button';
+        unscheduleBtn.addEventListener('click', () => updatePostSchedule(item.id, ''));
+        actions.append(dateInput, unscheduleBtn);
+      } else {
+        const assignBtn = node('button', 'secondary-action', '排到這一天');
+        assignBtn.type = 'button';
+        assignBtn.addEventListener('click', () => {
+          if (!selectedCalDate) {
+            calActionStatus.classList.remove('storage-error');
+            calActionStatus.textContent = '先點月曆上的一天';
+            return;
+          }
+          updatePostSchedule(item.id, selectedCalDate);
+        });
+        actions.append(assignBtn);
+      }
+
+      const openBtn = node('button', 'secondary-action', '打開');
+      openBtn.type = 'button';
+      openBtn.addEventListener('click', () => openSavedPost(item, calendarDialog));
+      actions.append(openBtn);
+
+      row.append(info, actions);
+      return row;
+    }
+
+    function renderCalendar() {
+      const now = new Date();
+      const todayKey = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+      const monthPrefix = `${calYear}-${String(calMonth + 1).padStart(2, '0')}`;
+      calMonthLabel.textContent = `${calYear} 年 ${calMonth + 1} 月`;
+
+      const byDate = new Map();
+      const unscheduled = [];
+      let monthCount = 0;
+      let monthMissingCount = 0;
+      for (const item of savedPosts) {
+        const dateStr = typeof item?.publishDate === 'string' ? item.publishDate.trim() : '';
+        if (!/^\d{4}-\d{2}-\d{2}$/.test(dateStr)) {
+          unscheduled.push(item);
+          continue;
+        }
+        if (dateStr.startsWith(monthPrefix + '-')) {
+          monthCount++;
+          if (calendarPostWarnings(item).length > 0) monthMissingCount++;
+        }
+        if (!byDate.has(dateStr)) byDate.set(dateStr, []);
+        byDate.get(dateStr).push(item);
+      }
+
+      calGrid.replaceChildren();
+      ['日', '一', '二', '三', '四', '五', '六'].forEach(dayName => {
+        calGrid.append(node('div', 'cal-weekday', dayName));
+      });
+
+      const firstWeekday = new Date(calYear, calMonth, 1).getDay();
+      const daysInMonth = new Date(calYear, calMonth + 1, 0).getDate();
+      for (let i = 0; i < firstWeekday; i++) {
+        calGrid.append(node('div', 'cal-cell is-empty'));
+      }
+      for (let day = 1; day <= daysInMonth; day++) {
+        const key = `${monthPrefix}-${String(day).padStart(2, '0')}`;
+        const cell = node('div', 'cal-cell' + (key === todayKey ? ' is-today' : '') + (key === selectedCalDate ? ' is-selected' : ''));
+        cell.setAttribute('role', 'button');
+        cell.tabIndex = 0;
+        cell.setAttribute('aria-pressed', String(key === selectedCalDate));
+        const selectDay = () => {
+          selectedCalDate = key;
+          calActionStatus.textContent = '';
+          calActionStatus.classList.remove('storage-error');
+          renderCalendar();
+        };
+        cell.addEventListener('click', selectDay);
+        cell.addEventListener('keydown', event => {
+          if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); selectDay(); }
+        });
+
+        const dayRow = node('div', 'cal-day-row');
+        dayRow.append(node('span', '', String(day)));
+        if (key === todayKey) dayRow.append(node('span', 'cal-today-badge', '今'));
+        cell.append(dayRow);
+
+        const dayPosts = byDate.get(key) || [];
+        if (dayPosts.length) {
+          const tags = node('div', 'cal-tags');
+          dayPosts.forEach(item => {
+            const label = calendarPostLabel(item);
+            const warnings = calendarPostWarnings(item);
+            const hasWarn = warnings.length > 0;
+            const tag = node('span', 'cal-tag' + (hasWarn ? ' is-warn' : ''), (hasWarn ? '⚠ ' : '') + label);
+            tag.title = hasWarn ? `${label}（${warnings.join('、')}）` : label;
+            tags.append(tag);
+          });
+          cell.append(tags);
+        }
+        calGrid.append(cell);
+      }
+
+      calSummary.textContent = `本月已排 ${monthCount} 篇 · 缺內容 ${monthMissingCount} 篇 · 未排 ${unscheduled.length} 篇`;
+
+      calDayList.replaceChildren();
+      if (!selectedCalDate) {
+        calDayHeading.textContent = '這一天';
+        calDayList.append(node('p', 'empty-list', '先點月曆上的一天'));
+      } else {
+        calDayHeading.textContent = `這一天（${selectedCalDate}）`;
+        const dayPosts = byDate.get(selectedCalDate) || [];
+        if (!dayPosts.length) calDayList.append(node('p', 'empty-list', '這一天目前沒有排程貼文'));
+        else dayPosts.forEach(item => calDayList.append(buildCalendarListItem(item, 'day')));
+      }
+
+      calUnscheduledList.replaceChildren();
+      if (!unscheduled.length) calUnscheduledList.append(node('p', 'empty-list', '目前沒有未排程的貼文'));
+      else unscheduled.forEach(item => calUnscheduledList.append(buildCalendarListItem(item, 'unscheduled')));
+    }
+
+    document.getElementById('open-calendar').addEventListener('click', () => {
+      const now = new Date();
+      calYear = now.getFullYear();
+      calMonth = now.getMonth();
+      selectedCalDate = null;
+      calActionStatus.textContent = '';
+      calActionStatus.classList.remove('storage-error');
+      renderCalendar();
+      calendarDialog.showModal();
+    });
+    document.getElementById('cal-prev').addEventListener('click', () => {
+      calMonth--;
+      if (calMonth < 0) { calMonth = 11; calYear--; }
+      renderCalendar();
+    });
+    document.getElementById('cal-next').addEventListener('click', () => {
+      calMonth++;
+      if (calMonth > 11) { calMonth = 0; calYear++; }
+      renderCalendar();
+    });
+    document.getElementById('cal-today').addEventListener('click', () => {
+      const now = new Date();
+      calYear = now.getFullYear();
+      calMonth = now.getMonth();
+      renderCalendar();
     });
     document.getElementById('cloud-upload-all').addEventListener('click', async () => {
       const statusEl = document.getElementById('posts-status');
