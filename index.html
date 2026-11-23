@@ -416,13 +416,20 @@
     .cal-cell:hover:not(.is-empty) { border-color: var(--main); }
     .cal-cell.is-empty { background: transparent; border-color: transparent; cursor: default; }
     .cal-cell.is-today { border: 2px solid var(--main); background: var(--court); }
+    .cal-cell.is-big-day { background: #fff9e6; border-color: #d99a00; }
     .cal-cell.is-selected { box-shadow: inset 0 0 0 2px var(--main-dark); background: #f3f7ee; }
     .cal-day-row { display: flex; align-items: center; justify-content: space-between; gap: 2px; font-size: 12px; font-weight: 700; color: var(--ink); }
     .cal-today-badge { font-size: 10px; font-weight: 700; background: var(--main); color: white; border-radius: 999px; padding: 1px 6px; line-height: 1.4; }
+    .cal-big-badge { display: block; max-width: 100%; font-size: 10px; font-weight: 700; background: #ffe8a3; color: #7a4f00; border-radius: 5px; padding: 1px 4px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
     .cal-tags { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
     .cal-tag { display: block; max-width: 100%; min-width: 0; background: #edf3ef; color: var(--main-dark); border-left: 3px solid var(--main); border-radius: 6px; padding: 3px 5px; font-size: 11px; line-height: 1.35; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
     .cal-tag.is-warn { background: #fff4e5; color: #8a4b00; border-left-color: #d9822b; }
     .cal-summary { margin: 14px 0 0; font-size: 13px; font-weight: 600; color: var(--main-dark); }
+    .cal-month-summary { margin: 10px 0 0; padding: 10px 12px; background: var(--surface); border: 1px solid var(--line); border-radius: 12px; display: grid; gap: 6px; font-size: 13px; }
+    .cal-month-summary p { margin: 0; line-height: 1.5; }
+    .cal-line-row { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+    .cal-line-row label { margin: 0; font-size: 12px; font-weight: 700; }
+    .cal-line-row input { width: 96px; min-height: 34px; padding: 4px 8px; font-size: 13px; }
     .cal-section { margin-top: 16px; padding-top: 14px; border-top: 1px solid var(--line); }
     .cal-section h4 { margin: 0 0 8px; font-size: 14px; color: var(--main-dark); }
     .cal-list { display: grid; gap: 8px; }
@@ -668,6 +675,14 @@
       </div>
       <div class="cal-grid" id="cal-grid"></div>
       <p class="cal-summary" id="cal-summary" role="status"></p>
+      <div class="cal-month-summary" id="cal-month-summary">
+        <div class="cal-line-row" id="cal-line-row" hidden>
+          <label for="cal-line-friends">LINE 好友人數</label>
+          <input id="cal-line-friends" type="number" min="0" step="1" placeholder="0">
+          <span id="cal-line-estimate"></span>
+        </div>
+        <div id="cal-insights"></div>
+      </div>
       <p class="dialog-status" id="cal-action-status" role="status"></p>
       <section class="cal-section" aria-labelledby="cal-day-heading">
         <h4 id="cal-day-heading">這一天</h4>
@@ -3000,10 +3015,16 @@ let richMenu=normalizeRichMenu({cells:[{icon:'🎾',label:'認識網咖',content
       if (dialogToClose?.open) dialogToClose.close();
     }
 
+    const BIG_DAYS = { '2026-11-25': '課程展示' };
+    const LINE_FRIENDS_KEY = 'courtmate-day11-line-friends-v1';
     const calendarDialog = document.getElementById('calendar-dialog');
     const calMonthLabel = document.getElementById('cal-month-label');
     const calGrid = document.getElementById('cal-grid');
     const calSummary = document.getElementById('cal-summary');
+    const calLineRow = document.getElementById('cal-line-row');
+    const calLineFriendsInput = document.getElementById('cal-line-friends');
+    const calLineEstimate = document.getElementById('cal-line-estimate');
+    const calInsights = document.getElementById('cal-insights');
     const calActionStatus = document.getElementById('cal-action-status');
     const calDayHeading = document.getElementById('cal-day-heading');
     const calDayList = document.getElementById('cal-day-list');
@@ -3011,6 +3032,90 @@ let richMenu=normalizeRichMenu({cells:[{icon:'🎾',label:'認識網咖',content
     let calYear = new Date().getFullYear();
     let calMonth = new Date().getMonth();
     let selectedCalDate = null;
+
+    if (PLATFORMS.includes('LINE')) {
+      calLineRow.hidden = false;
+      try {
+        const savedFriends = localStorage.getItem(LINE_FRIENDS_KEY);
+        if (savedFriends !== null) calLineFriendsInput.value = savedFriends;
+      } catch (_) {}
+      calLineFriendsInput.addEventListener('input', () => {
+        try { localStorage.setItem(LINE_FRIENDS_KEY, calLineFriendsInput.value); } catch (_) {}
+        renderCalendarSummaryExtras();
+      });
+    }
+
+    function dateKeyWithOffset(dateStr, offsetDays) {
+      const [y, m, d] = dateStr.split('-').map(Number);
+      const dt = new Date(y, m - 1, d + offsetDays);
+      return `${dt.getFullYear()}-${String(dt.getMonth() + 1).padStart(2, '0')}-${String(dt.getDate()).padStart(2, '0')}`;
+    }
+
+    function renderCalendarSummaryExtras() {
+      const now = new Date();
+      const todayY = now.getFullYear();
+      const todayM = now.getMonth();
+      const todayKey = `${todayY}-${String(todayM + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+      const monthPrefix = `${calYear}-${String(calMonth + 1).padStart(2, '0')}`;
+
+      const byDate = new Map();
+      let linePostsInMonth = 0;
+      for (const item of savedPosts) {
+        const dateStr = typeof item?.publishDate === 'string' ? item.publishDate.trim() : '';
+        if (!/^\d{4}-\d{2}-\d{2}$/.test(dateStr)) continue;
+        if (!byDate.has(dateStr)) byDate.set(dateStr, []);
+        byDate.get(dateStr).push(item);
+        if (dateStr.startsWith(monthPrefix + '-') && (item?.posts?.LINE || '').trim().length > 0) {
+          linePostsInMonth++;
+        }
+      }
+
+      if (PLATFORMS.includes('LINE')) {
+        const raw = calLineFriendsInput.value.trim();
+        if (raw === '') {
+          calLineEstimate.textContent = `本月有排且已寫 LINE：${linePostsInMonth} 篇（輸入好友人數可估算群發則數，門檻 200 則）`;
+          calLineEstimate.classList.remove('storage-error');
+        } else {
+          const friends = Math.max(0, Math.floor(Number(raw) || 0));
+          const estimated = linePostsInMonth * friends;
+          calLineEstimate.textContent = `本月 LINE 群發估算：${linePostsInMonth} 篇 × ${friends} 人 = ${estimated} 則（門檻 200 則）`;
+          calLineEstimate.classList.toggle('storage-error', estimated > 200);
+        }
+      }
+
+      calInsights.replaceChildren();
+      for (const [dateStr, name] of Object.entries(BIG_DAYS)) {
+        if (!dateStr.startsWith(monthPrefix + '-') || dateStr < todayKey) continue;
+        let count = 0;
+        for (let offset = -7; offset <= 0; offset++) {
+          count += (byDate.get(dateKeyWithOffset(dateStr, offset)) || []).length;
+        }
+        const p = node('p', count === 0 ? 'storage-error' : '',
+          count === 0
+            ? `⚠ 重要日子 ${dateStr}（${name}）當天及前 7 天目前 0 篇已排貼文！`
+            : `重要日子 ${dateStr}（${name}）當天及前 7 天已排 ${count} 篇貼文`
+        );
+        calInsights.append(p);
+      }
+
+      const isPastMonth = calYear < todayY || (calYear === todayY && calMonth < todayM);
+      if (!isPastMonth) {
+        const daysInMonth = new Date(calYear, calMonth + 1, 0).getDate();
+        const isCurrentMonth = calYear === todayY && calMonth === todayM;
+        const startDay = isCurrentMonth ? now.getDate() : 1;
+        let streak = 0;
+        let maxGap = 0;
+        for (let day = startDay; day <= daysInMonth; day++) {
+          const k = `${monthPrefix}-${String(day).padStart(2, '0')}`;
+          if ((byDate.get(k) || []).length > 0) streak = 0;
+          else { streak++; if (streak > maxGap) maxGap = streak; }
+        }
+        const gapLabel = isCurrentMonth
+          ? `從今天起到月底最長連續沒排文：${maxGap} 天`
+          : `本月最長連續沒排文：${maxGap} 天`;
+        calInsights.append(node('p', maxGap >= 7 ? 'storage-error' : '', (maxGap >= 7 ? '⚠ ' : '') + gapLabel));
+      }
+    }
 
     function calendarPostLabel(item) {
       return (item?.card?.topic || '').trim() || item?.name || '未命名貼文';
@@ -3136,7 +3241,8 @@ let richMenu=normalizeRichMenu({cells:[{icon:'🎾',label:'認識網咖',content
       }
       for (let day = 1; day <= daysInMonth; day++) {
         const key = `${monthPrefix}-${String(day).padStart(2, '0')}`;
-        const cell = node('div', 'cal-cell' + (key === todayKey ? ' is-today' : '') + (key === selectedCalDate ? ' is-selected' : ''));
+        const bigDayName = BIG_DAYS[key] || '';
+        const cell = node('div', 'cal-cell' + (key === todayKey ? ' is-today' : '') + (bigDayName ? ' is-big-day' : '') + (key === selectedCalDate ? ' is-selected' : ''));
         cell.setAttribute('role', 'button');
         cell.tabIndex = 0;
         cell.setAttribute('aria-pressed', String(key === selectedCalDate));
@@ -3155,6 +3261,11 @@ let richMenu=normalizeRichMenu({cells:[{icon:'🎾',label:'認識網咖',content
         dayRow.append(node('span', '', String(day)));
         if (key === todayKey) dayRow.append(node('span', 'cal-today-badge', '今'));
         cell.append(dayRow);
+        if (bigDayName) {
+          const badge = node('span', 'cal-big-badge', bigDayName);
+          badge.title = bigDayName;
+          cell.append(badge);
+        }
 
         const dayPosts = byDate.get(key) || [];
         if (dayPosts.length) {
@@ -3173,13 +3284,15 @@ let richMenu=normalizeRichMenu({cells:[{icon:'🎾',label:'認識網咖',content
       }
 
       calSummary.textContent = `本月已排 ${monthCount} 篇 · 缺內容 ${monthMissingCount} 篇 · 未排 ${unscheduled.length} 篇`;
+      renderCalendarSummaryExtras();
 
       calDayList.replaceChildren();
       if (!selectedCalDate) {
         calDayHeading.textContent = '這一天';
         calDayList.append(node('p', 'empty-list', '先點月曆上的一天'));
       } else {
-        calDayHeading.textContent = `這一天（${selectedCalDate}）`;
+        const selectedBigName = BIG_DAYS[selectedCalDate];
+        calDayHeading.textContent = selectedBigName ? `這一天（${selectedCalDate} · ${selectedBigName}）` : `這一天（${selectedCalDate}）`;
         const dayPosts = byDate.get(selectedCalDate) || [];
         if (!dayPosts.length) calDayList.append(node('p', 'empty-list', '這一天目前沒有排程貼文'));
         else dayPosts.forEach(item => calDayList.append(buildCalendarListItem(item, 'day')));
